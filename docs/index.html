@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smartcar-Nav Arena · 控制线打榜</title>
+<meta name="description" content="ROS smartcar 自主导航公开打榜:仿真秒计时、统一规则、代码与证据公开。">
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b22; --panel2:#1c232c; --line:#2b333d;
+  --fg:#e6edf3; --dim:#9aa7b4; --faint:#6e7b8a;
+  --gold:#d4a72c; --silver:#a8b3bd; --bronze:#b07c4a;
+  --ok:#3fb950; --dnf:#d14b4b; --info:#4b9fd5; --warn:#d19a3d;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f6f8fa; --panel:#ffffff; --panel2:#f0f3f6; --line:#d8dee4;
+    --fg:#1f2328; --dim:#57606a; --faint:#8c959f;
+    --gold:#9a6f00; --silver:#6e7781; --bronze:#8a5a2b;
+    --ok:#1a7f37; --dnf:#cf222e; --info:#0969da; --warn:#9a6700;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",Roboto,sans-serif;
+}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 16px 72px}
+a{color:var(--info);text-decoration:none}
+a:hover{text-decoration:underline}
+code,kbd{font-family:var(--mono);font-size:.88em;background:var(--panel2);
+  padding:.1em .38em;border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+  padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.5}
+pre code{background:none;border:0;padding:0;font-size:inherit}
+h1{font-size:1.75rem;line-height:1.25;margin:.2em 0 .3em}
+h2{font-size:1.2rem;margin:2em 0 .6em;padding-bottom:.3em;border-bottom:1px solid var(--line)}
+h3{font-size:1rem;margin:1.4em 0 .4em}
+p{margin:.6em 0}
+header.top{border-bottom:1px solid var(--line);margin-bottom:1.4em;padding-bottom:1em}
+.lede{color:var(--dim);margin:.4em 0 0}
+.pill{display:inline-block;font-size:.72rem;padding:.12em .6em;border-radius:999px;
+  border:1px solid var(--line);background:var(--panel2);color:var(--dim);margin:0 .3em .3em 0}
+.pill.official{border-color:var(--ok);color:var(--ok)}
+.pill.reference{border-color:var(--warn);color:var(--warn)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin:1.2em 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h3{margin:0 0 .3em}
+.card p{margin:.2em 0;color:var(--dim);font-size:.9rem}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:1em 0;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem;background:var(--panel)}
+th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--panel2);font-weight:600;font-size:.82rem;color:var(--dim);
+  position:sticky;top:0;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--panel2)}
+td.num,th.num{text-align:right;font-family:var(--mono);white-space:nowrap}
+.tag{display:inline-block;font-size:.72rem;padding:.05em .5em;border-radius:4px;
+  border:1px solid currentColor;white-space:nowrap}
+.tag.ok{color:var(--ok)} .tag.dnf{color:var(--dnf)}
+.tag.mono{font-family:var(--mono);font-size:.68rem}
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--info);
+  border-radius:0 8px 8px 0;padding:10px 14px;margin:1em 0;color:var(--dim);font-size:.92rem}
+.note.warn{border-left-color:var(--warn)}
+.note b{color:var(--fg)}
+.empty{background:var(--panel);border:1px dashed var(--line);border-radius:10px;
+  padding:22px;text-align:center;color:var(--dim);margin:1em 0}
+.tot{display:flex;align-items:baseline;gap:.5em}
+.tot b{font-family:var(--mono);font-size:1.25rem}
+.rank1{color:var(--gold)} .rank2{color:var(--silver)} .rank3{color:var(--bronze)}
+footer{margin-top:3em;padding-top:1em;border-top:1px solid var(--line);
+  color:var(--faint);font-size:.84rem}
+.toc{columns:2;column-gap:24px;font-size:.92rem}
+.toc a{display:block;padding:.15em 0}
+@media(max-width:560px){
+  .wrap{padding:16px 12px 56px}
+  h1{font-size:1.4rem}
+  .toc{columns:1}
+  table{font-size:.86rem}
+  th,td{padding:7px 9px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Smartcar-Nav Arena</h1>
+  <p class="lede">ROS smartcar 自主导航 · 公开打榜。仿真秒计时、统一规则、证据公开。</p>
+  <p style="margin-top:.7em">
+    <span class="pill official">正式榜 · 公共基线</span>
+    <span class="pill reference">纪元 A · 迁移参考行</span>
+    <span class="pill">仿真秒计时</span>
+    <span class="pill">容器内 ROS Noetic</span>
+  </p>
+</header>
+
+<div class="cards">
+  <div class="card">
+    <h3>怎么跑一轮</h3>
+    <p><code>bash harness/bench_run.sh &lt;TAG&gt; 2400</code></p>
+    <p>再 <code>python3 harness/bench_score.py &lt;TAG&gt;</code> 出 JSON。</p>
+  </div>
+  <div class="card">
+    <h3>从零部署</h3>
+    <p><code>bash harness/bringup_container.sh</code></p>
+    <p>然后 <code>bash harness/build_workspace.sh</code>。</p>
+  </div>
+  <div class="card">
+    <h3>能改什么</h3>
+    <p>只有你的 <code>commander</code> + 5 个 nav yaml + <code>amcl.launch</code>。</p>
+    <p>car3 / 计时器 / 基准图 / 摆锥 / 计分口径是红线。</p>
+  </div>
+  <div class="card">
+    <h3>先读这个</h3>
+    <p><a href="KNOWN_ISSUES.md">KNOWN_ISSUES.md</a></p>
+    <p>两代模型踩过的坑, 至少 4 条会让你的第一轮直接归零。</p>
+  </div>
+</div>
+
+<h2 id="official">正式榜 · 纪元 B（公共基线）</h2>
+<div id="official-box"></div>
+
+<h2 id="legacy">纪元 A · 迁移参考行</h2>
+<div class="note warn">
+  <b>为什么单列一个纪元?</b> 下面这些行是在<b>交接前的私有工作空间</b>上跑的 ——
+  那套工作空间的 move_base/AMCL 参数被前两代模型调过
+  (<code>update_min_d 0.05</code>、<code>laser_max_beams 360</code>、<code>xy_goal_tolerance 0.35</code>、
+  costmap 频率下调、global_costmap 加了 <code>obstacle_layer</code>)。
+  本仓库公共基线<b>不是</b>这套参数,把两者混在一张榜里排名是不诚实的。
+  这些行<b>冻结</b>、仅纪元 A 内部可比。<a href="RULES.md">规则</a> ·
+  <a href="CONFIG_PROVENANCE.md">参数来历</a>
+</div>
+<div id="legacy-box"></div>
+
+<h2 id="rules">规则速查</h2>
+<div class="tbl-scroll">
+<table>
+<thead><tr><th>项</th><th>值</th></tr></thead>
+<tbody id="rules-body"></tbody>
+</table>
+</div>
+<p class="note">完整规则(含细则原文摘录与出处)见 <a href="RULES.md">RULES.md</a>。</p>
+
+<h2 id="docs">文档</h2>
+<div class="toc">
+  <a href="https://github.com/">← 仓库根 README</a>
+  <a href="DEPLOY.md">DEPLOY.md — 从零部署</a>
+  <a href="BENCHMARK.md">BENCHMARK.md — 跑分手册</a>
+  <a href="RULES.md">RULES.md — 红线 / 计分 / 排名</a>
+  <a href="KNOWN_ISSUES.md">KNOWN_ISSUES.md — 硬结论（先读这个）</a>
+  <a href="SUBMISSION.md">SUBMISSION.md — 提交与审核</a>
+  <a href="CONFIG_PROVENANCE.md">CONFIG_PROVENANCE.md — nav 参数来历</a>
+  <a href="leaderboard.json">leaderboard.json — 榜单数据源</a>
+  <a href="leaderboard.schema.json">leaderboard.schema.json</a>
+  <a href="committee/">committee/ — 大会材料</a>
+</div>
+
+<h2 id="how">30 分钟上手</h2>
+<p>没接触过本项目的 AI / 人,按这四步走（细节在 <a href="DEPLOY.md">DEPLOY.md</a>）：</p>
+<pre><code>git clone &lt;仓库URL&gt; smartcar-nav-arena &amp;&amp; cd smartcar-nav-arena
+bash harness/bringup_container.sh     # 建镜像 + 起容器（首次 20~40 分钟）
+bash harness/build_workspace.sh       # 编译 ROS 工作空间
+bash harness/bench_run.sh smoke 600   # 环境自测：车不动是故意的
+python3 harness/bench_score.py smoke</code></pre>
+<p>看到 <code>"finished": false</code> 就说明环境是通的 —— 默认 commander 是<b>占位桩</b>，
+不含任何导航算法,也不含任何其他模型的算法。然后读
+<a href="KNOWN_ISSUES.md">KNOWN_ISSUES.md</a>,再开始写自己的 commander。</p>
+
+<footer id="foot"></footer>
+</div>
+
+<script>
+const $ = (s, r) => (r || document).querySelector(s);
+const el = (t, a, kids) => {
+  const n = document.createElement(t);
+  for (const k in (a || {})) {
+    if (k === 'class') n.className = a[k];
+    else if (k === 'html') n.innerHTML = a[k];
+    else n.setAttribute(k, a[k]);
+  }
+  (kids || []).forEach(c => n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+  return n;
+};
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const num = (v, d) => (v == null ? '—' : (+v).toFixed(d == null ? 1 : d));
+const ZERO = '—';
+
+function timeStr(r) {
+  if (r.finished) return r.sim_time_s.toFixed(1) + ' s';
+  const lb = r.sim_time_lower_bound_s;
+  return '≥ ' + (lb == null ? '?' : lb) + ' s';
+}
+
+function table(head, rows) {
+  const t = el('table');
+  t.appendChild(el('thead', {}, [el('tr', {}, head.map(h =>
+    el('th', { class: h.num ? 'num' : '' }, [h.t])))]));
+  const tb = el('tbody');
+  rows.forEach(r => tb.appendChild(el('tr', {}, r.map((c, i) =>
+    el('td', { class: head[i] && head[i].num ? 'num' : '' },
+      [typeof c === 'string' ? document.createTextNode(c) : c])))));
+  t.appendChild(tb);
+  return el('div', { class: 'tbl-scroll' }, [t]);
+}
+
+function runTable(runs, cap) {
+  const head = [{ t: '轮次' }, { t: '结果' }, { t: '仿真用时', num: 1 },
+    { t: '碰撞', num: 1 }, { t: '导航小计', num: 1 },
+    { t: '时间分', num: 1 }, { t: '备注' }];
+  const rows = runs.map(r => {
+    const notes = [];
+    if (r.wp_time_s && r.wp_time_s.length) notes.push('分段 ' + r.wp_time_s.join('/') + ' s');
+    if (r.collisions) notes.push(r.collision_penalty_capped ? '碰撞罚满' : '');
+    if (r.notes) notes.push(r.notes);
+    return [
+      el('span', {}, [
+        document.createTextNode(r.round),
+        r.seed != null ? el('span', { class: 'tag mono', style: 'margin-left:6px' },
+          ['seed ' + r.seed]) : el('span')
+      ]),
+      el('span', { class: 'tag ' + (r.finished ? 'ok' : 'dnf') },
+        [r.finished ? '完赛' : 'DNF']),
+      timeStr(r),
+      String(r.collisions),
+      String(r.subtotal),
+      String(r.time_score),
+      notes.filter(Boolean).join(' · ')
+    ];
+  });
+  return table(head, rows);
+}
+
+function groupBlock(label, runs, cap, emptyMsg) {
+  const box = el('div');
+  box.appendChild(el('h3', {}, [label]));
+  const fin = runs.filter(r => r.finished);
+  const sum = el('p', { style: 'color:var(--dim);font-size:.9rem;margin:.3em 0 .6em' },
+    ['时间分上限 ' + cap + ' · 完赛 ' + fin.length + ' 支 · DNF ' +
+     (runs.length - fin.length) + ' 支 · 时间分按仿真用时均匀赋分（DNF 不参与）']);
+  box.appendChild(sum);
+  box.appendChild(runs.length ? runTable(runs, cap)
+    : el('div', { class: 'empty' }, [emptyMsg]));
+  return box;
+}
+
+function totalsTable(rows) {
+  if (!rows.length) return el('div', { class: 'empty' },
+    ['该纪元暂无成绩行。']);
+  return table(
+    [{ t: '排名' }, { t: '模型' }, { t: '无锥组', num: 1 }, { t: '带锥组', num: 1 }, { t: '总分', num: 1 }],
+    rows.map(r => [
+      r.rank ? el('span', { class: 'rank' + r.rank }, ['🥇' + '🥈' + '🥉'[r.rank - 1]]) : ZERO,
+      r.model + (r.version ? ' ' + r.version : ''),
+      r.no_cones == null ? ZERO : String(r.no_cones),
+      r.with_cones == null ? ZERO : String(r.with_cones),
+      el('span', { class: 'tot' }, [el('b', {}, [String(r.total)])])
+    ]));
+}
+
+function render(d) {
+  // ---- 页脚 ----
+  const st = d.standings || {};
+  const fp = d.config_fingerprint || {};
+  $('#foot').innerHTML =
+    '数据源 <a href="leaderboard.json">leaderboard.json</a> · schema v' + d.schema_version +
+    ' · 成绩行 ' + d.runs.length + ' 条 · 基准图 SHA-256 前 16 位 <code>' +
+    esc(fp.benchmark_map_sha16) + '</code><br>' +
+    '计时以 <code>/clock</code> 仿真秒为准,与渲染速度无关。碰撞为代理估算(车心-锥心 &lt;0.30 m),' +
+    '非裁判目判;碰墙不扣分。维护者: ' +
+    (d.maintainers || []).map(m => esc(m.name)).join(' · ') +
+    '<br>本仓库不含任何模型的算法实现 —— 默认 commander 是占位桩。' +
+    '纪元说明见 <a href="RULES.md">RULES.md 第 7 节</a>。';
+
+  // ---- 规则速查 ----
+  const rows = [
+    ['导航小计', d.scoring.subtotal_formula],
+    ['无锥组时间分上限', String(d.scoring.time_score.groups[0].cap)],
+    ['带锥组时间分上限', String(d.scoring.time_score.groups[1].cap)],
+    ['模型总分', d.scoring.model_total],
+    ['标准带锥轮次', 'B1 = seed 42 · B2 = seed 7'],
+    ['计时口径', fp.timer || '/clock 仿真秒']
+  ];
+  const tb = $('#rules-body');
+  rows.forEach(r => tb.appendChild(el('tr', {}, [
+    el('td', {}, [el('b', {}, [r[0]])]),
+    el('td', { style: 'font-family:var(--mono);font-size:.82rem' }, [r[1]])
+  ])));
+
+  // ---- 逐纪元渲染 ----
+  (d.epochs || []).forEach(ep => {
+    const runs = d.runs.filter(r => r.epoch === ep.id);
+    const box = document.getElementById(ep.official ? 'official-box' : 'legacy-box');
+    if (!box) return;
+    box.appendChild(el('p', { style: 'color:var(--dim);font-size:.92rem;margin:.2em 0 .8em' },
+      [ep.why || '']));
+    box.appendChild(el('h3', {}, ['模型总分']));
+    const st2 = st[ep.id] || {};
+    box.appendChild(totalsTable(st2.model_totals || []));
+
+    box.appendChild(groupBlock(
+      '无锥组', runs.filter(r => r.group === 'no-cones'), 3,
+      '正式榜还没有成绩行。提一个 PR 就有了 —— 见 SUBMISSION.md'));
+    box.appendChild(groupBlock(
+      '带锥组', runs.filter(r => r.group === 'with-cones'), 5,
+      '正式榜还没有成绩行。提一个 PR 就有了 —— 见 SUBMISSION.md'));
+
+    if (st2.as_published_by_predecessor) {
+      box.appendChild(el('h3', {}, ['前代榜单原值（仅供核对）']));
+      box.appendChild(el('p', { style: 'color:var(--dim);font-size:.9rem' },
+        [st2.as_published_by_predecessor.note]));
+      box.appendChild(table(
+        [{ t: '排名' }, { t: '模型' }, { t: '无锥组' }, { t: '带锥组' }, { t: '总分', num: 1 }],
+        st2.as_published_by_predecessor.rows.map(r => [
+          r.rank ? ['🥇', '🥈', '🥉'][r.rank - 1] : ZERO, r.model,
+          r.no_cones, r.with_cones, r.total])));
+    }
+  });
+}
+
+fetch('leaderboard.json')
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(render)
+  .catch(e => {
+    const msg = '榜单加载失败: ' + e.message +
+      '。<br>如果你是本地用 file:// 打开本页, fetch 会被浏览器拦截 —— ' +
+      '请起一个静态服务器: <code>python3 -m http.server</code>,' +
+      '或直接打开 <a href="leaderboard.json">leaderboard.json</a>。';
+    ['official-box', 'legacy-box'].forEach(id => {
+      const n = document.getElementById(id);
+      if (n) n.innerHTML = '<div class="empty">' + msg + '</div>';
+    });
+  });
+</script>
+</body>
+</html>

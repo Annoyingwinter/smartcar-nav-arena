@@ -1,0 +1,58 @@
+name: validate
+
+# CI 的职责是拦住**明显不诚实的提交**(格式错、证据缺、红线被改、算术不自洽),
+# 不是替人验证成绩 —— Gazebo 复跑需要 10 GB 内存和十几分钟机器时间,
+# 属于维护者的人工义务(见 docs/SUBMISSION.md 第 3 节)。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Python 依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-numpy python3-pil
+
+      - name: 红线组件未被改动
+        run: bash harness/verify_redline.sh
+
+      - name: leaderboard.json 校验(schema / SHA 格式 / 算术 / 证据存在性)
+        run: python3 harness/validate_leaderboard.py
+
+      - name: shell 与 python 语法自检
+        run: |
+          for f in harness/*.sh; do bash -n "$f"; done
+          echo "shell OK"
+          python3 -m py_compile harness/*.py
+          echo "python OK"
+
+      - name: 脚本不硬编码绝对路径(保证 clone 到任何位置都能跑)
+        run: |
+          # harness/ 里只允许 arena_env.sh 与 smartcar-entrypoint.sh 之外的文件
+          # 出现 /home/<用户名>/ 这类个人路径。入口脚本允许出现容器内固定路径。
+          if grep -rnE '/home/[a-z]' harness/ \
+             --include='*.sh' --include='*.py' \
+             --exclude=arena_env.sh --exclude=smartcar-entrypoint.sh; then
+            echo "::error::harness/ 里出现了个人绝对路径, clone 到别的机器会跑不起来"
+            exit 1
+          fi
+          echo "路径 OK"
+
+      - name: 基准图与细则原件 SHA 核对
+        run: |
+          got=$(sha256sum env/benchmark_map.pgm | cut -d' ' -f1)
+          echo "benchmark_map.pgm = $got"
+          case "$got" in
+            a9adb82b3796de3a*) echo "前缀命中(前 16 位 a9adb82b3796de3a)" ;;
+            *) echo "::error::基准图 SHA 前缀变了: $got"; exit 1 ;;
+          esac

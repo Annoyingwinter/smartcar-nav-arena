@@ -1,0 +1,63 @@
+# ============================================================================
+# 【基线待考据】请勿把这个文件的取值当成"大会出厂默认值"。
+#
+# 大会教程《第一轮分站赛控制教程》"4、参数"一节只列出了 5 个参数文件的文件名
+# 与各自用途，**未给出任何数值**，所以这些值的出处无法考证。
+# 本文件取自最早可考快照(2026-09-30)；逐项判断依据、哪些项存疑、以及
+# 本文件的 SHA-256，全部记录在 docs/CONFIG_PROVENANCE.md。
+#
+# 参赛者**可以自由调整**本文件 —— 大会细则允许改 move_base/AMCL 的这 5 个
+# 配置文件。提交成绩时请附上你改动后版本的 SHA-256 前 16 位。
+#
+# 标了 [待考据] 的参数：在最早可考快照与后期版本里取值**相同**，因此无法证明
+# 它是原厂值还是已经被改过。若你从大会原始包里找到了不同的值，请提 PR 修正
+# docs/CONFIG_PROVENANCE.md 并同步本文件。
+# ============================================================================
+# DWA 局部规划器参数 (参考 ucar_navigation, 速度上限按 car3 底盘略调)
+DWAPlannerROS:
+
+# Robot Configuration Parameters
+  max_vel_x: 0.45
+  min_vel_x: -0.10
+
+  max_vel_y: 0.0
+  min_vel_y: 0.0
+
+# The velocity when robot is moving in a straight line
+  max_vel_trans:  0.45
+  min_vel_trans:  0.05
+
+  max_vel_theta: 0.8
+  min_vel_theta: 0.3
+
+  acc_lim_x: 1.0
+  acc_lim_y: 0.0
+  acc_lim_theta: 1.0
+
+# Goal Tolerance Parameters
+  xy_goal_tolerance: 0.22
+  yaw_goal_tolerance: 0.5
+  latch_xy_goal_tolerance: false
+
+# Forward Simulation Parameters
+  sim_time: 1.5
+  vx_samples: 20
+  vy_samples: 0
+  vth_samples: 40
+  controller_frequency: 10.0
+
+# Trajectory Scoring Parameters
+  path_distance_bias: 32.0
+  goal_distance_bias: 20.0
+  occdist_scale: 0.02
+  forward_point_distance: 0.325
+  stop_time_buffer: 0.2
+  scaling_speed: 0.25
+  max_scaling_factor: 0.2
+
+# Oscillation Prevention Parameters
+  oscillation_reset_dist: 0.05
+
+# Debugging
+  publish_traj_pc : true
+  publish_cost_grid_pc: true

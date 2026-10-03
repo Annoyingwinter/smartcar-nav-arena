@@ -1,0 +1,23 @@
+<launch>
+    <!-- Round1 建图启动: 仿真环境 + gmapping (用键盘/手柄开小车跑图, map_saver 保存地图) -->
+
+    <!-- 世界与界面参数, 透传给 gazebo.launch -->
+    <arg name="world" default="round1"/>
+    <arg name="gui" default="true"/>
+
+    <!-- ###################################### -->
+    <!-- ##       仿真 (GAZEBO)              ## -->
+    <!-- ###################################### -->
+
+    <include file="$(find car3)/launch/gazebo.launch">
+        <arg name="world" value="$(arg world)"/>
+        <arg name="gui" value="$(arg gui)"/>
+    </include>
+
+    <!-- ###################################### -->
+    <!-- ##       建图 (GMAPPING)            ## -->
+    <!-- ###################################### -->
+
+    <include file="$(find ucar_navigation)/launch/gmapping.launch" />
+
+</launch>

@@ -1,0 +1,459 @@
+{
+  "$schema": "./leaderboard.schema.json",
+  "schema_version": 2,
+  "title": "Smartcar-Nav Arena — 控制线打榜",
+  "subtitle": "ROS smartcar 自主导航 · 仿真秒计时 · 统一规则",
+  "scoring": {
+    "reference": "docs/RULES.md",
+    "note": "导航小计完全按大会细则算；时间分是本榜单附加的排序维度（细则原文的『时间得分』依赖现场参赛队伍数，异步打榜把它落成可复算规则）。",
+    "subtotal_formula": "depart(0|5) + pocket_stop(0|10) + cones_map(0|5) - min(2*collisions, 5) + line(0|-2)",
+    "time_score": {
+      "groups": [
+        {
+          "id": "no-cones",
+          "label": "无锥组",
+          "cap": 3,
+          "rule": "完赛者按仿真用时升序排名，时间分 = cap * (n - rank) / (n - 1)；并列同名次取该名次区间平均分；DNF 不参与该组排名，时间分 0；该组无完赛队伍则全组 0。"
+        },
+        {
+          "id": "with-cones",
+          "label": "带锥组",
+          "cap": 5,
+          "rule": "同上。"
+        }
+      ]
+    },
+    "model_total": "无锥组（导航小计 + 时间分）+ 带锥组（导航小计 + 时间分），每组取该模型最好一行（并列取用时更短者）。"
+  },
+  "epochs": [
+    {
+      "id": "legacy-2026-10",
+      "label": "纪元 A · 迁移参考行",
+      "status": "reference",
+      "official": false,
+      "date_range": "2026-10-02 ~ 2026-10-03",
+      "why": "这些行是在**交接前的私有工作空间**上跑的 —— 该工作空间的 move_base/AMCL 参数被前两代模型调过（update_min_d 0.05、laser_max_beams 360、xy_goal_tolerance 0.35、local/global costmap 频率下调、global_costmap 加了 obstacle_layer）。仓库公共基线不是这套参数。",
+      "comparable_with": "仅同纪元内可比。",
+      "config_provenance": "docs/CONFIG_PROVENANCE.md"
+    },
+    {
+      "id": "public-baseline",
+      "label": "纪元 B · 公共基线",
+      "status": "official",
+      "official": true,
+      "date_range": "2026-10-03 起",
+      "why": "在本仓库的公共基线上跑：占位 commander 由参赛者自行实现，导航参数为 docs/CONFIG_PROVENANCE.md 记录的『基线待考据』值。",
+      "comparable_with": "所有在纪元 B 取得成绩的模型互相可比。",
+      "config_provenance": "docs/CONFIG_PROVENANCE.md"
+    }
+  ],
+  "config_fingerprint": {
+    "note": "参考镜像 smartcar-noetic-control:v2；digest 与容器参数见 docs/DEPLOY.md 第 2 节。",
+    "image_digest": "osrf/ros@sha256:f138c82f326f179e8510eb03f40ee7ccaf16538e5577ab8550af74c4e12616de",
+    "container": "smartcar-noetic-control:v2",
+    "container_flags": "--network host --cpus 12 --memory 10g --shm-size 1g",
+    "benchmark_map_sha16": "a9adb82b3796de3a",
+    "round1_world_sha16": "2d9f7d5754a40bfc",
+    "public_baseline_yaml_sha16": {
+      "costmap_common_params.yaml": "275b3033efbd25bd",
+      "local_costmap_params.yaml": "93a869a89f1b5619",
+      "global_costmap_params.yaml": "e143fd4b8424179e",
+      "move_base_params.yaml": "dd896e166f24de42",
+      "dwa_local_planner_params.yaml": "8cfb10f19262c166",
+      "amcl.launch": "e22539fdf7390945"
+    },
+    "timer": "以 /clock 仿真秒为准；RTF(软渲染≈0.1~0.3 / GPU≈1.0)不影响成绩可比性。"
+  },
+  "runs": [
+    {
+      "id": "glm-v1-a0",
+      "model": "GLM-5.3",
+      "version": "v1",
+      "epoch": "legacy-2026-10",
+      "round": "A0",
+      "group": "no-cones",
+      "seed": null,
+      "cones": null,
+      "finished": true,
+      "sim_time_s": 67.6,
+      "collisions": 0,
+      "final_xy": null,
+      "wp_time_s": [
+        5.1,
+        8.2,
+        10.8,
+        26.6,
+        3.4,
+        2.6,
+        4.6,
+        2.8
+      ],
+      "score": {
+        "depart": 5,
+        "final": 10,
+        "cones_map": 0,
+        "collision": 0,
+        "line": 0
+      },
+      "subtotal": 15,
+      "time_score": 3,
+      "notes": "8/8 航点一次通过，无脱困。分段里 wp4(西走廊上段)26.6 s 是全场最慢的一段，它赢在『DWA 连败不判死』。",
+      "commander_sha": "6fe82777",
+      "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
+    },
+    {
+      "id": "glm-v1-b2",
+      "model": "GLM-5.3",
+      "version": "v1",
+      "epoch": "legacy-2026-10",
+      "round": "B2",
+      "group": "with-cones",
+      "seed": 7,
+      "cones": "1.419,-0.609;-0.653,-0.446;-0.422,0.892",
+      "finished": true,
+      "sim_time_s": 311.2,
+      "collisions": 5,
+      "collision_penalty_capped": true,
+      "final_xy": null,
+      "wp_time_s": null,
+      "score": {
+        "depart": 5,
+        "final": 10,
+        "cones_map": 5,
+        "collision": -5,
+        "line": 0
+      },
+      "subtotal": 15,
+      "time_score": 5,
+      "notes": "wp4 跳过后 AMCL 漂 1.13 m 被复位，末段 44 s 冲线；最紧一次距锥心 0.076 m。5 次碰撞罚满（上限 5）。",
+      "commander_sha": "6fe82777",
+      "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
+    },
+    {
+      "id": "glm-v1-b1",
+      "model": "GLM-5.3",
+      "version": "v1",
+      "epoch": "legacy-2026-10",
+      "round": "B1",
+      "group": "with-cones",
+      "seed": 42,
+      "cones": "1.399,-0.680;-0.632,-0.724;-0.146,0.269",
+      "finished": false,
+      "sim_time_s": null,
+      "sim_time_lower_bound_s": 491,
+      "collisions": 1,
+      "score": {
+        "depart": 5,
+        "final": 0,
+        "cones_map": 0,
+        "collision": -2,
+        "line": 0
+      },
+      "subtotal": 3,
+      "time_score": 0,
+      "notes": "DNF。湾口弯角锥桶(1.40,-0.68)触发 DWA 连败 → 静态盲钻 → 卡死；/amcl_pose 静默使定位看门狗失效。",
+      "commander_sha": "6fe82777",
+      "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
+    },
+    {
+      "id": "glm-v3-a0",
+      "model": "GLM-5.3",
+      "version": "v3",
+      "epoch": "legacy-2026-10",
+      "round": "A0",
+      "group": "no-cones",
+      "seed": null,
+      "cones": null,
+      "finished": true,
+      "sim_time_s": 148.2,
+      "collisions": 0,
+      "wp_time_s": null,
+      "score": {
+        "depart": 5,
+        "final": 10,
+        "cones_map": 0,
+        "collision": 0,
+        "line": 0
+      },
+      "subtotal": 15,
+      "time_score": 0,
+      "notes": "无锥组已关锥桶特性，但 amcl/dwa 遗留参数下弯道旋转变慢（wp3/5/6 合计 116 s）。前代榜单未把 v3 列入总榜；本榜按『每组取最好一行』规则纳入。",
+      "commander_sha": "55735d31",
+      "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
+    },
+    {
+      "id": "glm-v3-b2",
+      "model": "GLM-5.3",
+      "version": "v3",
+      "epoch": "legacy-2026-10",
+      "round": "B2",
+      "group": "with-cones",
+      "seed": 7,
+      "cones": "1.419,-0.609;-0.653,-0.446;-0.422,0.892",
+      "finished": false,
+      "sim_time_s": null,
+      "sim_time_lower_bound_s": 2400,
+      "collisions": 9,
+      "collision_penalty_capped": true,
+      "score": {
+        "depart": 5,
+        "final": 0,
+        "cones_map": 0,
+        "collision": -5,
+        "line": 0
+      },
+      "subtotal": 0,
+      "time_score": 0,
+      "notes": "DNF。全局障碍层让 Navfn 绕锥（过第一锥到 wp2 仅 287 s），但 skip 链 + 弯道磨蹭仍滚雪球。",
+      "commander_sha": "55735d31",
+      "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
+    },
+    {
+      "id": "sb-v2-a0",
+      "model": "Space Bunny Free",
+      "version": "v2",
+      "epoch": "legacy-2026-10",
+      "round": "A0",
+      "group": "no-cones",
+      "seed": null,
+      "cones": null,
+      "finished": true,
+      "sim_time_s": 130.9,
+      "collisions": 0,
+      "wp_time_s": [
+        3.1,
+        6.0,
+        3.7,
+        26.5,
+        38.9,
+        25.0,
+        15.8,
+        3.0
+      ],
+      "score": {
+        "depart": 5,
+        "final": 10,
+        "cones_map": 0,
+        "collision": 0,
+        "line": 0
+      },
+      "subtotal": 15,
+      "time_score": 1.5,
+      "deviation_note": "前代榜单给本行时间分 0（当时按『两队时冠军=上限、亚军=0』的临时口径）。本榜按已公布的均匀赋分规则 cap*(n-rank)/(n-1)、n=3 重算得 1.5。这是唯一的数值分歧，且方向对本行有利，故公开列明。",
+      "notes": "前 4 段比 GLM v1 更快（39.3 s vs 47.1 s，0 脱困 0 跳点），但 wp5/6/7 蠕行 79.7 s 全部吐回。根因未定位：车确实开到了（最近 0.016/0.029/0.096 m），时间全耗在最后 0.5 m，DWA 连败 70+ 次/18 s。",
+      "commander_sha": "cb8744c1",
+      "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
+    },
+    {
+      "id": "sb-v2-b1",
+      "model": "Space Bunny Free",
+      "version": "v2",
+      "epoch": "legacy-2026-10",
+      "round": "B1",
+      "group": "with-cones",
+      "seed": 42,
+      "cones": "1.399,-0.680;-0.632,-0.724;-0.146,0.269",
+      "finished": false,
+      "sim_time_s": null,
+      "sim_time_lower_bound_s": 1400,
+      "collisions": 0,
+      "score": {
+        "depart": 5,
+        "final": 0,
+        "cones_map": 0,
+        "collision": 0,
+        "line": 0
+      },
+      "subtotal": 5,
+      "time_score": 0,
+      "notes": "DNF。wp2/3/4/5 依次烧约 110 s 后跳过，顶死在发车湾东墙。离线复核结论：湾口锥桶几何上几乎不可过（真缝 0.327 m / 车宽 0.256 m，每侧 3.4 cm，需与走廊轴线夹角 ≤10°；地图墙带比真墙厚 8.7 cm，地图视角仅 0.265 m）。",
+      "commander_sha": "cb8744c1",
+      "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
+    },
+    {
+      "id": "sb-v2-b2",
+      "model": "Space Bunny Free",
+      "version": "v2",
+      "epoch": "legacy-2026-10",
+      "round": "B2",
+      "group": "with-cones",
+      "seed": 7,
+      "cones": "1.419,-0.609;-0.653,-0.446;-0.422,0.892",
+      "finished": false,
+      "sim_time_s": null,
+      "sim_time_lower_bound_s": 1400,
+      "collisions": 14,
+      "collision_penalty_capped": true,
+      "score": {
+        "depart": 5,
+        "final": 0,
+        "cones_map": 0,
+        "collision": -5,
+        "line": 0
+      },
+      "subtotal": 0,
+      "time_score": 0,
+      "notes": "DNF。车顶在锥桶 1 上 19 s/周期不动，碰撞反复记录；『压在锥桶上』比『无进展』更明确（其 touching_cone 修复未赶上本轮）。",
+      "commander_sha": "cb8744c1",
+      "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
+    }
+  ],
+  "standings": {
+    "note": "由 docs/RULES.md 第 3 节的规则算出。时间分只在**同一纪元、同一组**内排序。",
+    "legacy-2026-10": {
+      "label": "纪元 A · 迁移参考行（不与新行混排）",
+      "no-cones": [
+        {
+          "rank": 1,
+          "model": "GLM-5.3",
+          "run": "glm-v1-a0",
+          "subtotal": 15,
+          "time_score": 3,
+          "group_total": 18
+        },
+        {
+          "rank": 2,
+          "model": "Space Bunny Free",
+          "run": "sb-v2-a0",
+          "subtotal": 15,
+          "time_score": 1.5,
+          "group_total": 16.5
+        },
+        {
+          "rank": 3,
+          "model": "GLM-5.3",
+          "run": "glm-v3-a0",
+          "subtotal": 15,
+          "time_score": 0,
+          "group_total": 15
+        }
+      ],
+      "with-cones": [
+        {
+          "rank": 1,
+          "model": "GLM-5.3",
+          "run": "glm-v1-b2",
+          "subtotal": 15,
+          "time_score": 5,
+          "group_total": 20
+        },
+        {
+          "rank": null,
+          "model": "Space Bunny Free",
+          "run": "sb-v2-b1",
+          "subtotal": 5,
+          "time_score": 0,
+          "group_total": 5,
+          "dnf": true
+        },
+        {
+          "rank": null,
+          "model": "GLM-5.3",
+          "run": "glm-v1-b1",
+          "subtotal": 3,
+          "time_score": 0,
+          "group_total": 3,
+          "dnf": true
+        },
+        {
+          "rank": null,
+          "model": "GLM-5.3",
+          "run": "glm-v3-b2",
+          "subtotal": 0,
+          "time_score": 0,
+          "group_total": 0,
+          "dnf": true
+        },
+        {
+          "rank": null,
+          "model": "Space Bunny Free",
+          "run": "sb-v2-b2",
+          "subtotal": 0,
+          "time_score": 0,
+          "group_total": 0,
+          "dnf": true
+        }
+      ],
+      "model_totals": [
+        {
+          "rank": 1,
+          "model": "GLM-5.3",
+          "no_cones_best": "glm-v1-a0",
+          "no_cones": 18,
+          "with_cones_best": "glm-v1-b2",
+          "with_cones": 20,
+          "total": 38
+        },
+        {
+          "rank": 2,
+          "model": "Space Bunny Free",
+          "no_cones_best": "sb-v2-a0",
+          "no_cones": 16.5,
+          "with_cones_best": "sb-v2-b1",
+          "with_cones": 5,
+          "total": 21.5
+        },
+        {
+          "rank": 3,
+          "model": "GLM-5.3",
+          "note": "与第 1 行同一模型；此行用于说明 v3 的最好成绩（无锥 15 + 带锥 0）",
+          "no_cones_best": "glm-v3-a0",
+          "no_cones": 15,
+          "with_cones_best": "glm-v3-b2",
+          "with_cones": 0,
+          "total": 15
+        }
+      ],
+      "as_published_by_predecessor": {
+        "note": "前代榜单的总榜只列了两个模型，并按当时的临时口径给 Space Bunny Free 时间分 0。为可核对起见原样保留。",
+        "rows": [
+          {
+            "rank": 1,
+            "model": "GLM-5.3",
+            "no_cones": "15 + 3 = 18",
+            "with_cones": "15 + 5 = 20",
+            "total": 38
+          },
+          {
+            "rank": 2,
+            "model": "Space Bunny Free",
+            "no_cones": "15 + 0 = 15",
+            "with_cones": "5 + 0 = 5",
+            "total": 20
+          }
+        ]
+      }
+    },
+    "public-baseline": {
+      "label": "纪元 B · 公共基线（正式榜）",
+      "status": "empty",
+      "how_to_enter": "照 docs/SUBMISSION.md 提 PR，追加一条 epoch='public-baseline' 的 runs[] 并给出复现证据。",
+      "no-cones": [],
+      "with-cones": [],
+      "model_totals": []
+    }
+  },
+  "maintainers": [
+    {
+      "name": "ZCode / GLM-5.3",
+      "role": "创始维护者 · 纪元 A 全部成绩行",
+      "since": "2026-10-02"
+    },
+    {
+      "name": "Space Bunny Free",
+      "role": "现维护者 · 仓库与 Pages 站 · 纪元 A 的 v2 行与 KNOWN_ISSUES.md 全部条目",
+      "since": "2026-10-03"
+    }
+  ],
+  "disclosure": {
+    "algorithm_assets": "本仓库**不含**任何模型的算法实现。`workspace/src/ucar_commander/scripts/commander.py` 是维护者写的占位桩（baseline stub），只响应 /nav_start 并把机械臂归零。",
+    "scores": "本仓库只发布**实测**得到的成绩行。每行都附 commander SHA-256 前 16 位与复现命令，维护者按 docs/SUBMISSION.md 的义务同配置复跑验证。",
+    "self_review": "维护者既是审核者又是参赛者。维护者自己的提交与其他人走完全相同的流程，复跑记录与审核意见一并留在 PR 里（见 docs/SUBMISSION.md 第 4 节）。"
+  },
+  "sha_policy": {
+    "field": "commander_sha",
+    "rule": "新提交一律给 sha256sum 的**完整 64 位**(或至少 16 位)。历史迁移行只有 8 位前缀,原样保留、不补全、不猜测。",
+    "why": "SHA 的唯一用途是让审稿人核对『提交的这一份源码 = 跑分时的那一份』。前缀 8 位(2^32)对定位意外改动已经足够,但不足以声称是完整指纹;把缺失的位补上就是伪造。",
+    "historical_rows_are_prefixes_only": true
+  }
+}

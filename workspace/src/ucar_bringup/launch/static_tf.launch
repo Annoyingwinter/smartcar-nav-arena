@@ -1,0 +1,17 @@
+<launch>
+	<!-- 静态 tf 发布 (仿参考空间格式保留)
+	     注意: 仿真里 car3 的传感器 tf 由 URDF + robot_state_publisher 自动发布,
+	     以下条目只用于真车阶段 (真车无 URDF 发布链路时取消注释并按实车测量值修改) -->
+
+  <!-- Devices, Sensors -->
+  <!-- those are measured physical distance between sensors and base center -->
+  <!--
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser"
+    args="-0.11 0.0 0.165 -0.07 0.0 0.0 /base_link /base_laser_link 20" />
+  <node pkg="tf" type="static_transform_publisher" name="from_baselink_to_usbcam"
+    args="0.14 0.00 0.13 0.0 0.0 0.0 /base_link /usb_cam 20" />
+  <node pkg="tf" type="static_transform_publisher" name="from_baselink_to_imu"
+    args="0.05 -0.05 0.05 0.0 0.0 0.0 /base_link /imu 20" />
+  -->
+
+</launch>

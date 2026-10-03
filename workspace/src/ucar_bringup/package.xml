@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ucar_bringup</name>
+  <version>0.0.0</version>
+  <description>Round1 顶层启动包: 汇总启动 仿真(gazebo) + 导航/建图 (对应参考空间的 ucar_bringup 角色)</description>
+
+  <maintainer email="ddd@example.com">ddd</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- 本包只承载 launch, 以下均为运行时依赖 -->
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>move_base_msgs</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>actionlib</exec_depend>
+  <exec_depend>car3</exec_depend>
+  <exec_depend>ucar_navigation</exec_depend>
+
+</package>

@@ -1,0 +1,30 @@
+<launch>
+
+    <!-- 地图文件 (ucar_navigation/maps 目录, map 帧与 Gazebo 世界帧重合) -->
+    <arg name="map" default="map.yaml" />
+
+    <!-- AMCL 初始位姿, 默认对齐 car3 出生点 -->
+    <arg name="initial_pose_x" default="1.72"/>
+    <arg name="initial_pose_y" default="0.27"/>
+    <arg name="initial_pose_a" default="-1.5708"/>
+
+    <!-- 运行地图服务器, 加载地图 -->
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find ucar_navigation)/maps/$(arg map)"/>
+
+    <!-- 运行 move_base (DWA) -->
+    <include file="$(find ucar_navigation)/launch/move_base.launch"/>
+
+    <!-- 启动 AMCL 定位 -->
+    <include file="$(find ucar_navigation)/launch/amcl.launch">
+        <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+        <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+        <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+    </include>
+
+    <!-- 运行 rviz -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find ucar_navigation)/rviz/nav.rviz" output="screen"/>
+
+    <!-- 任务决策节点 (预留接口, 功能开发后取消注释) -->
+    <!-- <include file="$(find ucar_commander)/launch/ucar_commander.launch" /> -->
+
+</launch>

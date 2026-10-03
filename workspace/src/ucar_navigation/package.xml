@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ucar_navigation</name>
+  <version>0.0.0</version>
+  <description>Round1 导航包: 地图(map_server) + 定位(amcl) + 建图(gmapping) + 路径规划(move_base/DWA) + rviz 配置</description>
+
+  <maintainer email="ddd@example.com">ddd</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- 本包只承载 launch/config/rviz/maps, 以下均为运行时依赖 -->
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>move_base_msgs</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>actionlib</exec_depend>
+  <exec_depend>map_server</exec_depend>
+  <exec_depend>amcl</exec_depend>
+  <exec_depend>move_base</exec_depend>
+  <exec_depend>gmapping</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>tf</exec_depend>
+
+</package>

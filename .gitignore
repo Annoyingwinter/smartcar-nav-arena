@@ -1,0 +1,23 @@
+# ---- 跑分产物(不入库; 证据请放 evidence/<run-id>/) ----
+runs/
+*.log
+trace.csv
+
+# ---- ROS / Python 构建产物 ----
+__pycache__/
+*.py[cod]
+workspace/build/
+workspace/devel/
+workspace/install/
+.vscode/
+*.swp
+
+# ---- 参赛者自己的算法资产(维护者默认不入库; 见 docs/SUBMISSION.md) ----
+# 注意: 提交成绩时 commander.py 的**副本**必须放进 evidence/<run-id>/,
+#那里是显式追踪的, 不受本节影响。
+evidence/*/**/nav_calib.py
+
+# ---- 其它 ----
+*.pgm.orig
+.DS_Store
+Thumbs.db

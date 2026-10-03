@@ -1,0 +1,35 @@
+<launch>
+    <!-- Round1 总启动: 仿真环境 + 导航栈
+         仿真:   car3 的 gazebo.launch (世界 round1 + car3 出生 + 机械臂初始化)
+         导航:   地图 map_server + 定位 amcl + move_base(DWA) + rviz
+    -->
+
+    <!-- 世界与界面参数, 透传给 gazebo.launch -->
+    <arg name="world" default="round1"/>
+    <arg name="gui" default="true"/>
+
+    <!-- AMCL 初始位姿, 默认对齐 car3 出生点 -->
+    <arg name="initial_pose_x" default="1.72"/>
+    <arg name="initial_pose_y" default="0.27"/>
+    <arg name="initial_pose_a" default="-1.5708"/>
+
+    <!-- ###################################### -->
+    <!-- ##       仿真 (GAZEBO)              ## -->
+    <!-- ###################################### -->
+
+    <include file="$(find car3)/launch/gazebo.launch">
+        <arg name="world" value="$(arg world)"/>
+        <arg name="gui" value="$(arg gui)"/>
+    </include>
+
+    <!-- ###################################### -->
+    <!-- ##       导航栈 (MAP/AMCL/DWA/RVIZ) ## -->
+    <!-- ###################################### -->
+
+    <include file="$(find ucar_navigation)/launch/nav.launch">
+        <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+        <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+        <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+    </include>
+
+</launch>
