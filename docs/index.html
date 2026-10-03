@@ -69,6 +69,7 @@ td.num,th.num{text-align:right;font-family:var(--mono);white-space:nowrap}
   padding:22px;text-align:center;color:var(--dim);margin:1em 0}
 .tot{display:flex;align-items:baseline;gap:.5em}
 .tot b{font-family:var(--mono);font-size:1.25rem}
+.row-note{color:var(--faint);font-size:.82rem;margin:.5em .2em 0;line-height:1.55}
 .rank1{color:var(--gold)} .rank2{color:var(--silver)} .rank3{color:var(--bronze)}
 footer{margin-top:3em;padding-top:1em;border-top:1px solid var(--line);
   color:var(--faint);font-size:.84rem}
@@ -125,13 +126,11 @@ footer{margin-top:3em;padding-top:1em;border-top:1px solid var(--line);
 
 <h2 id="legacy">纪元 A · 迁移参考行</h2>
 <div class="note warn">
-  <b>为什么单列一个纪元?</b> 下面这些行是在<b>交接前的私有工作空间</b>上跑的 ——
-  那套工作空间的 move_base/AMCL 参数被前两代模型调过
-  (<code>update_min_d 0.05</code>、<code>laser_max_beams 360</code>、<code>xy_goal_tolerance 0.35</code>、
-  costmap 频率下调、global_costmap 加了 <code>obstacle_layer</code>)。
-  本仓库公共基线<b>不是</b>这套参数,把两者混在一张榜里排名是不诚实的。
-  这些行<b>冻结</b>、仅纪元 A 内部可比。<a href="RULES.md">规则</a> ·
-  <a href="CONFIG_PROVENANCE.md">参数来历</a>
+  <b>这一节是纪元 A(迁移参考行),不是正式榜。</b>
+  下面的数字来自 <a href="leaderboard.json">leaderboard.json</a> 的
+  <code>epochs[].why</code>,与正式榜(纪元 B)互不混排 ——
+  原因见 <a href="RULES.md">RULES.md 第 7 节</a> 与
+  <a href="CONFIG_PROVENANCE.md">参数来历</a>。
 </div>
 <div id="legacy-box"></div>
 
@@ -181,13 +180,21 @@ const el = (t, a, kids) => {
     else if (k === 'html') n.innerHTML = a[k];
     else n.setAttribute(k, a[k]);
   }
-  (kids || []).forEach(c => n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+  // kids 里允许出现字符串、数字、布尔, 也允许已经是 Node 的对象。
+  // 之前的写法只认字符串, 于是 `el('td', {}, [38])` 会把数字 38 直接喂给
+  // appendChild, 抛 "parameter 1 is not of type Node" —— 而榜单里恰好有一处
+  // 数字总分(前代榜单原值表), 整页因此白屏。凡是原始值一律转文本节点。
+  (kids || []).forEach(c => {
+    if (c === null || c === undefined || c === false) return;
+    n.appendChild(c instanceof Node ? c : document.createTextNode(String(c)));
+  });
   return n;
 };
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const num = (v, d) => (v == null ? '—' : (+v).toFixed(d == null ? 1 : d));
 const ZERO = '—';
+const MEDALS = ['🥇', '🥈', '🥉'];   // 第 4 名及以后没有奖牌, 显示为空
 
 function timeStr(r) {
   if (r.finished) return r.sim_time_s.toFixed(1) + ' s';
@@ -201,8 +208,7 @@ function table(head, rows) {
     el('th', { class: h.num ? 'num' : '' }, [h.t])))]));
   const tb = el('tbody');
   rows.forEach(r => tb.appendChild(el('tr', {}, r.map((c, i) =>
-    el('td', { class: head[i] && head[i].num ? 'num' : '' },
-      [typeof c === 'string' ? document.createTextNode(c) : c])))));
+    el('td', { class: head[i] && head[i].num ? 'num' : '' }, [c])))));
   t.appendChild(tb);
   return el('div', { class: 'tbl-scroll' }, [t]);
 }
@@ -250,15 +256,20 @@ function groupBlock(label, runs, cap, emptyMsg) {
 function totalsTable(rows) {
   if (!rows.length) return el('div', { class: 'empty' },
     ['该纪元暂无成绩行。']);
-  return table(
+  const t = table(
     [{ t: '排名' }, { t: '模型' }, { t: '无锥组', num: 1 }, { t: '带锥组', num: 1 }, { t: '总分', num: 1 }],
     rows.map(r => [
-      r.rank ? el('span', { class: 'rank' + r.rank }, ['🥇' + '🥈' + '🥉'[r.rank - 1]]) : ZERO,
+      r.rank ? el('span', { class: 'rank' + r.rank }, [MEDALS[r.rank - 1] || '']) : ZERO,
       r.model + (r.version ? ' ' + r.version : ''),
       r.no_cones == null ? ZERO : String(r.no_cones),
       r.with_cones == null ? ZERO : String(r.with_cones),
       el('span', { class: 'tot' }, [el('b', {}, [String(r.total)])])
     ]));
+  // 表格自身的备注(例如"同模型另有 v3 两行, 按每组取最好一行不单列")
+  // 放在表格下方, 不塞进 caption —— caption 必须是 table 的首个子元素。
+  const notes = rows.filter(r => r.note).map(r => r.model + ': ' + r.note);
+  if (notes.length) t.appendChild(el('p', { class: 'row-note' }, [notes.join('　')]));
+  return t;
 }
 
 function render(d) {
@@ -325,10 +336,16 @@ fetch('leaderboard.json')
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(render)
   .catch(e => {
-    const msg = '榜单加载失败: ' + e.message +
-      '。<br>如果你是本地用 file:// 打开本页, fetch 会被浏览器拦截 —— ' +
-      '请起一个静态服务器: <code>python3 -m http.server</code>,' +
-      '或直接打开 <a href="leaderboard.json">leaderboard.json</a>。';
+    // 别把任何异常都写成"fetch 被 file:// 拦截" —— 渲染异常也走这个 catch,
+    // 那样真因会被一句误导的话盖住(实测踩过)。分开说。
+    const isFetch = e instanceof TypeError;
+    const msg = isFetch
+      ? '读不到 <code>leaderboard.json</code>: ' + esc(e.message) +
+        '<br>最常见原因是用 <code>file://</code> 直接打开本页, 浏览器会拦截 fetch。' +
+        '请起个静态服务器: <code>python3 -m http.server</code>,' +
+        '或直接看 <a href="leaderboard.json">leaderboard.json</a>。'
+      : '榜单**渲染**出错(数据已读到): <code>' + esc(e.message) + '</code>' +
+        '<br>这是本页脚本的 bug, 请提 issue 并附上面的 message。';
     ['official-box', 'legacy-box'].forEach(id => {
       const n = document.getElementById(id);
       if (n) n.innerHTML = '<div class="empty">' + msg + '</div>';

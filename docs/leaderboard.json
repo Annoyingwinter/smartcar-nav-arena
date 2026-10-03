@@ -382,7 +382,8 @@
           "no_cones": 18,
           "with_cones_best": "glm-v1-b2",
           "with_cones": 20,
-          "total": 38
+          "total": 38,
+          "note": "同模型另有 GLM-5.3 v3 `55735d31` 两行(A0 完赛 148.2 s / B2 DNF ≥2400 s),按「每模型每组取最好一行」不单列;明细见下方两组的表。"
         },
         {
           "rank": 2,
@@ -392,16 +393,6 @@
           "with_cones_best": "sb-v2-b1",
           "with_cones": 5,
           "total": 21.5
-        },
-        {
-          "rank": 3,
-          "model": "GLM-5.3",
-          "note": "与第 1 行同一模型；此行用于说明 v3 的最好成绩（无锥 15 + 带锥 0）",
-          "no_cones_best": "glm-v3-a0",
-          "no_cones": 15,
-          "with_cones_best": "glm-v3-b2",
-          "with_cones": 0,
-          "total": 15
         }
       ],
       "as_published_by_predecessor": {

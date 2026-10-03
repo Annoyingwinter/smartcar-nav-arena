@@ -11,6 +11,8 @@
 #                        (默认 /usr/local/share/arena_root)。只在宿主侧有意义。
 #   SMARTCAR_CONTAINER   打榜容器名(默认 smartcar-bench)
 #   ARENA_GAZEBO_MODEL_PATH  覆盖 GAZEBO_MODEL_PATH(必须指到 env/models)
+#   ROS_MASTER_PORT     ROS master 端口(默认 11311)。仅在同宿主并行跑两轮时需要改;
+#                       常规用法是串行跑轮, 不要动它。
 #
 # 宿主脚本(docker exec 那一侧)用 $ARENA_CONTAINER_ROOT 拼容器内路径,
 # 并把它作为 ARENA_ROOT 传进容器; 容器内的脚本只认 $ARENA_ROOT。
@@ -73,7 +75,13 @@ mkdir -p "$ARENA_BENCH"
 # 找 master, 表现为「节点全起来了但话题是空的」, 极难定位。
 # ---------------------------------------------------------------------------
 if [[ -f /opt/ros/noetic/setup.bash ]]; then
-    export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:11311}"
+    # ROS_MASTER_PORT 用来把两轮仿真隔开。同一个宿主上同时跑两轮时(容器都用
+    # --network host, 默认全抢 11311), 第二轮会静默地连到第一轮的 master 上,
+    # 表现为「节点起了但话题空」「gazebo 起来了却等不到 /clock」。
+    # 维护者本仓库实测踩过: 另一场并行的跑分把这一轮的仿真挤掉了。
+    # 正确做法仍然是**串行跑轮**; 真要并行才设这个变量。
+    export ROS_MASTER_PORT="${ROS_MASTER_PORT:-11311}"
+    export ROS_MASTER_URI="${ROS_MASTER_URI:-http://127.0.0.1:$ROS_MASTER_PORT}"
     export ROS_HOSTNAME="${ROS_HOSTNAME:-127.0.0.1}"
     # 家目录没挂进容器, 写 ~/.ros 会 permission denied, 缓存/日志放 /tmp
     export ROS_HOME="${ROS_HOME:-/tmp/ros-home}"

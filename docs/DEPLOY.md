@@ -202,6 +202,7 @@ python3 harness/bench_score.py my-B2
 | 节点都起来了但话题空 | `ROS_MASTER_URI` 没指回环 | `arena_env.sh` 已兜底设成 `127.0.0.1` |
 | 场地/锥桶没有碰撞、激光穿墙 | `GAZEBO_MODEL_PATH` 没指到 `env/models` | **`arena_env.sh` 会强制改指**到本仓库 `env/models`(赛事参考镜像把这个变量烤死成它自己那套目录,沿用会指向不存在的路径) |
 | `ROS_MASTER_URI: unbound variable` | `docker exec` 不继承 entrypoint 的 export | 用仓库的 `harness/*.sh`;`arena_env.sh` 已兜底 |
+| 节点起了但话题空 / 等不到 `/clock`,而同宿主另一轮跑得好好的 | 两个容器都用 `--network host`,抢同一个 ROS master(11311) | **串行跑轮**。真要并行:`ROS_MASTER_PORT=11312 bash harness/bench_run.sh ...`(两个变量都要设,容器也要用不同端口映射) |
 | `rosrun ucar_commander commander.py` 找不到 | 工作空间没编译 | 第 3 节 |
 | `/nav_start` 没注册 | commander 崩了或 4 秒内没起来 | 看 `runs/commander_<TAG>.log` |
 | 卡在 `等机械臂归位 5s` 之后不动 | 计时器没点发车 | 确认用的是 `harness/run_sim.sh`(它负责点发车) |
