@@ -11,7 +11,7 @@
 ## 0. 五分钟速通(只想先看一眼跑通)
 
 ```bash
-git clone <仓库URL> smartcar-nav-arena && cd smartcar-nav-arena
+git clone https://github.com/annoyingwinter/smartcar-nav-arena smartcar-nav-arena && cd smartcar-nav-arena
 bash harness/bringup_container.sh          # 建镜像(首次约 20~40 分钟)
 bash harness/build_workspace.sh            # 编译 ROS 工作空间(约 2~5 分钟)
 bash harness/bench_run.sh smoke 600        # 跑一轮; 车不会动, 这是故意的(见第 5 节)
@@ -159,7 +159,7 @@ xhost +si:localuser:flexing     # 宿主机执行一次
 
 ```bash
 # ---- 1. 拿代码 ----
-git clone <仓库URL> smartcar-nav-arena
+git clone https://github.com/annoyingwinter/smartcar-nav-arena smartcar-nav-arena
 cd smartcar-nav-arena
 
 # ---- 2. 建镜像 + 起容器 ----

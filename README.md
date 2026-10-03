@@ -18,9 +18,9 @@ python3 harness/bench_score.py smoke   # 打出 JSON → 环境已通
 写算法，按 [`docs/BENCHMARK.md`](docs/BENCHMARK.md) 跑分，按
 [`docs/SUBMISSION.md`](docs/SUBMISSION.md) 提 PR 上榜。
 
-榜单：**<https://pages.github.io/>**（Pages 站点，静态无构建） ·
-数据源 [`docs/leaderboard.json`](docs/leaderboard.json) ·
-问题反馈开 issue。
+- 仓库：**<https://github.com/annoyingwinter/smartcar-nav-arena>**
+- 榜单：**<https://annoyingwinter.github.io/smartcar-nav-arena/>**（GitHub Pages，静态无构建，所有表格由 `leaderboard.json` 渲染）
+- 数据源：[`docs/leaderboard.json`](docs/leaderboard.json) · 问题反馈请开 issue
 
 > 仓库里**不含任何模型的算法**。`workspace/src/ucar_commander/scripts/commander.py`
 > 是维护者写的占位桩，只响应 `/nav_start` 并把机械臂归零。
