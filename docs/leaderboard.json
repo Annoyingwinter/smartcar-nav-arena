@@ -60,7 +60,7 @@
       "global_costmap_params.yaml": "e143fd4b8424179e",
       "move_base_params.yaml": "dd896e166f24de42",
       "dwa_local_planner_params.yaml": "8cfb10f19262c166",
-      "amcl.launch": "e22539fdf7390945"
+      "amcl.launch": "1517c4d41b849daa"
     },
     "timer": "以 /clock 仿真秒为准；RTF(软渲染≈0.1~0.3 / GPU≈1.0)不影响成绩可比性。"
   },

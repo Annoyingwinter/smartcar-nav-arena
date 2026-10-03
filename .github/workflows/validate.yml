@@ -96,6 +96,33 @@ jobs:
           fi
           echo "路径 OK"
 
+      - name: 所有 .launch 是良构 XML, 所有 .yaml 能解析
+        run: |
+          # 实测踩过: 给 amcl.launch 加"基线待考据"注释头时用了 YAML 的 '#' 写法,
+          # 而 .launch 是 XML —— '#' 在 XML 里是 invalid token, roslaunch 直接
+          # RLException 退出, 整个导航栈起不来。
+          python3 - <<'PY'
+          import glob, sys, xml.etree.ElementTree as ET
+          bad = 0
+          for f in sorted(glob.glob('workspace/**/*.launch', recursive=True)) + \
+                   sorted(glob.glob('harness/*.launch')):
+              try:
+                  ET.parse(f)
+              except Exception as e:
+                  print('::error::%s 不是良构 XML: %s' % (f, e)); bad = 1
+          try:
+              import yaml
+              for f in sorted(glob.glob('workspace/**/*.yaml', recursive=True)):
+                  try:
+                      yaml.safe_load(open(f, encoding='utf-8'))
+                  except Exception as e:
+                      print('::error::%s 不是良构 YAML: %s' % (f, e)); bad = 1
+          except ImportError:
+              print('::notice::没装 PyYAML, 跳过 YAML 检查')
+          sys.exit(bad)
+          PY
+          echo "launch / yaml 语法 OK"
+
       - name: 占位 commander 不含导航算法
         run: |
           # 仓库不得夹带任何模型的算法。做形态检查:

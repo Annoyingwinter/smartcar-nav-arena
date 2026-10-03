@@ -55,7 +55,7 @@
 | `workspace/src/ucar_navigation/config/global_costmap_params.yaml` | `e143fd4b8424179e` |
 | `workspace/src/ucar_navigation/config/move_base_params.yaml` | `dd896e166f24de42` |
 | `workspace/src/ucar_navigation/config/dwa_local_planner_params.yaml` | `8cfb10f19262c166` |
-| `workspace/src/ucar_navigation/launch/amcl.launch` | `e22539fdf7390945` |
+| `workspace/src/ucar_navigation/launch/amcl.launch` | `1517c4d41b849daa` |
 
 复核命令:
 
