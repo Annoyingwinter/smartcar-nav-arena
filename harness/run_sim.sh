@@ -68,16 +68,52 @@ say "决策节点: $CMD"
 # 1) 拉起无头仿真 + 导航栈
 # MAP 默认为考核在用的地图; 传绝对路径可切到候选地图做 A/B(不动任何默认件)
 MAP="${MAP:-}"
-say "拉起 headless_nav.launch (gazebo gui:=false, 不起 rviz)"
+# ---- 启动前的硬检查 ----
+# run_sim.sh 跑在 `set -uo pipefail`(没有 -e)下, 所以 roslaunch 失败**不会**中止脚本。
+# 实测踩过: harness/headless_nav.launch 一度根本没进仓库, roslaunch 立刻抛
+# RLException 退出, 而脚本继续往下走 wait_topic /clock —— 那一刻恰好同宿主
+# 另一场跑分占着 11311, 于是它把**别人的** /clock、/scan、/amcl_pose 全当成了自己的,
+# 一路"成功"到最后。整轮成绩全是别人的。
+# 所以这里先查文件存在, 后面再查进程活着 —— 任何一次"其实没起来"都必须当场退出。
+NAV_LAUNCH="$ARENA_HARNESS/headless_nav.launch"
+if [[ ! -f "$NAV_LAUNCH" ]]; then
+    say "!! 找不到 $NAV_LAUNCH"
+    say "   这是打榜链路的入口文件, 不该缺失。用 git status 确认它没被 .gitignore 吃掉。"
+    exit 1
+fi
+
+say "拉起 $NAV_LAUNCH (gazebo gui:=false, 不起 rviz)"
 if [[ -n "$MAP" ]]; then
     say "  使用指定地图: $MAP"
-    roslaunch "$ARENA_HARNESS/headless_nav.launch" gui:=false \
+    roslaunch "$NAV_LAUNCH" gui:=false \
         map:="$MAP" > "$SIMLOG" 2>&1 &
 else
-    roslaunch "$ARENA_HARNESS/headless_nav.launch" gui:=false \
+    roslaunch "$NAV_LAUNCH" gui:=false \
         > "$SIMLOG" 2>&1 &
 fi
 LAUNCH_PID=$!
+
+# roslaunch 会在几毫秒内因参数/文件错误退出。等它 8 秒:
+# 进程没了 == 这一轮的仿真栈压根没起来, 后面的 wait_topic 全部不可信。
+sleep 8
+if ! kill -0 "$LAUNCH_PID" 2>/dev/null; then
+    say "!! roslaunch 进程已退出 —— 仿真栈没起来"
+    say "---- $SIMLOG 末尾 ----"
+    tail -40 "$SIMLOG" | tee -a "$LOG"
+    exit 1
+fi
+
+# 双重确认: 看到的 /clock 必须来自我们这个 roslaunch。同一宿主上若还有另一场
+# 打榜在跑(容器都用 --network host, 默认都抢 11311), 读到的可能是那边的。
+# 端口被占时 roslaunch 会另起 master 或直接连上别人的, 这里用"我们启动的进程还在"
+# + "gazebo 节点确实在跑"两条一起判。
+if ! rosnode list 2>/dev/null | grep -qx "/gazebo"; then
+    say "!! 没看到 /gazebo 节点"
+    say "   若同宿主还有别的跑分在跑, 很可能是 ROS master 端口($ROS_MASTER_PORT)被抢了。"
+    say "   正确做法是串行跑轮; 真要并行请给本轮设不同的 ROS_MASTER_PORT。"
+    tail -20 "$SIMLOG" | tee -a "$LOG"
+    exit 1
+fi
 
 if ! wait_topic /clock 120; then
     say "!! /clock 120s 内没出现, gazebo 可能没起来"

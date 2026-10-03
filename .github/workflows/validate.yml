@@ -48,7 +48,7 @@ jobs:
           fi
           echo "路径 OK"
 
-      - name: 基准图与细则原件 SHA 核对
+      - name: 基准图 SHA 核对
         run: |
           got=$(sha256sum env/benchmark_map.pgm | cut -d' ' -f1)
           echo "benchmark_map.pgm = $got"
@@ -56,3 +56,63 @@ jobs:
             a9adb82b3796de3a*) echo "前缀命中(前 16 位 a9adb82b3796de3a)" ;;
             *) echo "::error::基准图 SHA 前缀变了: $got"; exit 1 ;;
           esac
+
+      - name: 仿真真正加载的地图与 env/ 里的那份是同一张
+        run: |
+          a=$(sha256sum workspace/src/ucar_navigation/maps/map.pgm | cut -d' ' -f1)
+          b=$(sha256sum env/benchmark_map.pgm | cut -d' ' -f1)
+          echo "workspace map.pgm = $a"
+          echo "env   benchmark_map.pgm = $b"
+          [ "$a" = "$b" ] || { echo "::error::两份地图不一致"; exit 1; }
+
+      - name: 打榜链路的关键文件都在
+        run: |
+          # 这些文件曾经整份缺失过, 而脚本在 set -uo pipefail(无 -e)下不会因此中止,
+          # 于是「跑完了」但成绩其实是空的或别人的。这里钉死。
+          for f in harness/arena_env.sh harness/bench_run.sh harness/run_sim.sh \
+                   harness/headless_nav.launch harness/Dockerfile \
+                   harness/bringup_container.sh harness/build_workspace.sh \
+                   harness/verify_redline.sh harness/validate_leaderboard.py \
+                   harness/bench_score.py harness/bench_monitor.py \
+                   harness/spawn_cones.py harness/smartcar-entrypoint.sh \
+                   workspace/src/ucar_commander/scripts/commander.py \
+                   workspace/src/ucar_navigation/maps/map.yaml \
+                   env/benchmark_map.pgm env/round1.world env/REDLINE_SHA.txt \
+                   docs/index.html docs/leaderboard.json; do
+            if [ ! -s "$f" ]; then echo "::error::缺失或为空: $f"; exit 1; fi
+          done
+          echo "全部就位"
+
+      - name: 仓库里没有指向仓库外的绝对路径
+        run: |
+          # map.yaml 的 image 曾是建仓者本机的绝对路径, 别人 clone 后 map_server
+          # 会去读一个不存在的文件而且**不报错** —— 属于最难查的一类故障。
+          if grep -rn "/home/flexing\|第一轮下发" . \
+             --include='*.launch' --include='*.yaml' --include='*.xml' \
+             --include='*.urdf' --include='*.xacro' --include='*.world' \
+             --include='*.sdf' --include='*.msg' --include='*.srv'; then
+            echo "::error::有文件写着仓库外的绝对路径, clone 后会静默失效"
+            exit 1
+          fi
+          echo "路径 OK"
+
+      - name: 占位 commander 不含导航算法
+        run: |
+          # 仓库不得夹带任何模型的算法。做形态检查:
+          #   (a) 不得调用 move_base 动作客户端 —— 那就是"在导航";
+          #   (b) 不得给 Twist 的任何分量赋值 —— 那就是"在控制"。
+          # 注意(允许): 往 /cmd_vel 发一个**零** Twist 把车停住。占位桩必须做这件事,
+          # 否则发车后车会靠惯性继续走, 反而对不上"它不导航"的说明。
+          f=workspace/src/ucar_commander/scripts/commander.py
+          bad=0
+          if grep -nE 'MoveBaseAction|MoveBaseGoal|SendGoal|send_goal|actionlib' "$f"; then
+            echo "::error::占位 commander 调用了 move_base 动作客户端 —— 它必须不导航"; bad=1
+          fi
+          if grep -nE '\.(linear|angular)\.(x|y|z|theta)[[:space:]]*=' "$f"; then
+            echo "::error::占位 commander 给 Twist 赋了速度值 —— 它必须不控制"; bad=1
+          fi
+          [ $bad -eq 0 ] || exit 1
+          grep -q 'nav_start' "$f" || { echo "::error::占位 commander 缺少 /nav_start"; exit 1; }
+          grep -qE 'Publisher\(.*/cmd_vel.*Twist' "$f" \
+            || echo "::notice::占位 commander 没往 /cmd_vel 发停车指令, 发车后车会靠惯性继续走"
+          echo "占位 commander 形态 OK"

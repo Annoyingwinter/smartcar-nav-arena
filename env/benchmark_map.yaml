@@ -1,7 +1,12 @@
-image: /home/flexing/smartcar/ROS第一轮下发/第一轮下发/ustb_20th_smartcar/src/ucar_navigation/maps/map.pgm
+# 基准图的**指针文件**, 供人核对与离线工具(check_map_quality.py)使用。
+# 仿真实际加载的是 workspace/src/ucar_navigation/maps/map.yaml
+# (由 harness/headless_nav.launch 的 <arg name="map"> 指定)。
+#
+# 两者的 map.pgm / benchmark_map.pgm 内容完全相同(SHA-256 前 16 位 a9adb82b3796de3a)。
+# image 用相对文件名, 这样仓库 clone 到任何路径都能用。
+image: benchmark_map.pgm
 resolution: 0.050000
 origin: [-5.000000, -5.000000, 0.000000]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196
-

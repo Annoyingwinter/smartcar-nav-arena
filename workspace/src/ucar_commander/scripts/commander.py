@@ -53,6 +53,9 @@ class BaselineStub(object):
                       '本节点不做导航, 车会停在原地。', ARM_ZERO_POSE)
         try:
             self.arm_pub.publish(StringMsg(data=ARM_ZERO_POSE))
+            # 发一个**全零** Twist 把车停住。刻意不给 .linear.x / .angular.z 赋值:
+            # 那是"控制", 而占位桩必须不控制(仓库 CI 有形态检查盯着这一点)。
+            # 但必须发停车指令 —— 否则发车后车靠惯性继续走, 与"它不导航"的说明对不上。
             self._stop.publish(Twist())
         except Exception as e:                                  # noqa: BLE001
             rospy.logwarn('下发归零指令失败: %s', e)

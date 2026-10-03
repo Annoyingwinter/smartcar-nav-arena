@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!-- 无头版 nav_start: 与 ucar_bringup/nav_start.launch 等价, 去掉 rviz。
+     rviz 只是看图, 不参与决策, 无头跑时它会因缺 display 反复崩溃刷 CPU。
+     gazebo GUI 用 gui:=false 关掉(保留 gzserver 渲染, 相机传感器仍需 GPU)。 -->
+<!-- 打榜专用的无头导航栈入口(由 harness/run_sim.sh 拉起)。
+     它与 workspace/src/ucar_bringup/launch/nav_start.launch 等价, 只去掉 rviz:
+     rviz 只看图、不参与决策, 无头跑时它会因缺 display 反复崩溃刷 CPU。
+
+     放在 harness/ 而不是 ucar_bringup/launch/ 的原因: 它属于**评测链路**
+     而不是大会材料, 参赛者改它就改了评测口径。细则允许改的是 commander 与
+     nav 参数, 不含这个文件 —— 它已登记在 env/REDLINE_SHA.txt。 -->
+<launch>
+    <arg name="world" default="round1"/>
+    <arg name="gui" default="false"/>
+    <!-- 地图: 默认用考核在用的 map.yaml; 也可传绝对路径指向候选地图做对比,
+         这样不用改动工作空间里的任何默认件。 -->
+    <arg name="map" default="$(find ucar_navigation)/maps/map.yaml"/>
+
+    <arg name="initial_pose_x" default="1.72"/>
+    <arg name="initial_pose_y" default="0.27"/>
+    <arg name="initial_pose_a" default="-1.5708"/>
+
+    <include file="$(find car3)/launch/gazebo.launch">
+        <arg name="world" value="$(arg world)"/>
+        <arg name="gui" value="$(arg gui)"/>
+    </include>
+
+    <node name="map_server" pkg="map_server" type="map_server"
+          args="$(arg map)"/>
+
+    <include file="$(find ucar_navigation)/launch/move_base.launch"/>
+
+    <include file="$(find ucar_navigation)/launch/amcl.launch">
+        <arg name="initial_pose_x" value="$(arg initial_pose_x)"/>
+        <arg name="initial_pose_y" value="$(arg initial_pose_y)"/>
+        <arg name="initial_pose_a" value="$(arg initial_pose_a)"/>
+    </include>
+</launch>

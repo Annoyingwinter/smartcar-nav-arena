@@ -1,7 +1,22 @@
-image: /home/flexing/smartcar/ROS第一轮下发/第一轮下发/ustb_20th_smartcar/src/ucar_navigation/maps/map.pgm
+# ============================================================================
+# 【本次建仓唯一的改动】image: 由绝对路径改为相对文件名 map.pgm。
+#
+# 为什么必须改: 原值是建仓者本机的绝对路径, 指向仓库**外面**的一个目录。
+# 别人 clone 之后, map_server 会去读一个不存在的路径 —— 表现是「导航栈起来了
+# 但地图是空的 / 全是未知」, 而 map_server **不会报错**, 属于最难查的一类故障。
+#
+# 为什么这不算篡改基准图: image 字段只是**指针**, 指向的 map.pgm 一个字节都没动
+# (SHA-256 前 16 位仍是 a9adb82b3796de3a, 见 env/REDLINE_SHA.txt)。
+# resolution / origin / negate / occupied_thresh / free_thresh 五项**原样未动**,
+# 它们才是决定地图内容的部分。相对路径是 ROS 的常规写法, 行为等价。
+#
+# CI 会检查: (a) map.yaml 的五项参数与本文件头部记录一致;
+#          (b) image 是相对路径且指向的文件真实存在。
+# 若你发现原始包里 map.yaml 用的就是绝对路径而这反而是有意为之, 请提 PR 说明。
+# ============================================================================
+image: map.pgm
 resolution: 0.050000
 origin: [-5.000000, -5.000000, 0.000000]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196
-

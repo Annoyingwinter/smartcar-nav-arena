@@ -1,5 +1,6 @@
 # 红线组件 SHA-256 前 16 位(禁改;用于快速核对是否被篡改)。
-# 完整校验请用: bash harness/verify_redline.sh
+# 生成: 仓库初始化时由维护者计算
+# 核对: bash harness/verify_redline.sh
 
 env/benchmark_map.pgm                                          a9adb82b3796de3a
 env/round1.world                                               2d9f7d5754a40bfc
@@ -9,3 +10,6 @@ workspace/src/ucar_accumtimer/config/AccumTimer.yaml           320892131f40c92e
 harness/spawn_cones.py                                         7494802bd87fce57
 harness/bench_score.py                                         04197fb29a6cdd4e
 harness/bench_monitor.py                                       b26bd7035414724b
+harness/headless_nav.launch                                    442e47c1870747f1
+workspace/src/ucar_navigation/maps/map.yaml                    3e58484459a98df0
+env/benchmark_map.yaml                                         cb710198e0287a98
