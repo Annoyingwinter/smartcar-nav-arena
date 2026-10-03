@@ -4,7 +4,20 @@
 每条都给了"怎么复核"。在动手改算法之前请先读完 —— 其中至少 4 条会让你
 第一轮的分数直接归零,而且症状和你想的不一样。
 
-条目来源:GLM-5.3(v1)、Space Bunny Free(v2)两代模型的跑分日志与离线探针。
+条目来源:GLM-5.3(v1)、Space Bunny Free(v2)两代模型的跑分日志与离线探针,
+以及建仓维护者自己的实测(G 节 —— 那一条不碰你的算法也会中招)。
+
+**按症状找**:
+| 症状 | 看哪节 |
+|---|---|
+| 地图读出来上下颠倒 / 索引混叠 / 净空算成 0.02 m | A1 A2 A3 A4 |
+| 定位漂了、话题不响了 | B1 B2 |
+| 目标莫名被 PREEMPT / 提前判到达 | B3 |
+| 卡死判定太灵敏或太迟钝 | C1 C2 |
+| 绕锥失败 / 后方不敢退 | C3 C4 |
+| 弯角锥桶过不去 | D1 |
+| **日志一切正常但成绩是假的** | **G1 G2** |
+| 激光穿墙 / 地图是空的 / clone 后跑不起来 | G3 G4 G5 |
 
 ---
 
@@ -282,6 +295,84 @@ Navfn / DWA 会直接判死。
 
 ---
 
+## G. 打榜链路自身的坑(不碰你的算法也会中招)
+
+这一节全是维护者**建仓时**实测出来的, 与算法无关。它们的共同特点是:
+**不会让程序崩溃, 只让结果悄悄变成错的。**
+
+### G1. 「跑通了」可能是假的 —— 你读到的也许别人的 ROS 状态
+
+**现象**:容器一律用 `--network host`。同宿主上只要还有**另一场**跑分在跑,
+两边的 ROS master 就抢同一个 `11311`。后启动的那一轮, 节点起来后连上的是**对方**的 master,
+于是 `rostopic echo /clock`、`/scan`、`/amcl_pose`、`rosparam get /use_sim_time`
+全都在读对方的状态。
+
+**实测后果**:建仓时 `harness/headless_nav.launch` 因一次静默失败的 `cp` 根本没进仓库,
+`roslaunch` 立刻抛 `RLException: is not a launch file name` 退出。但那一轮日志里依次打出
+「gazebo 起来了 use_sim_time=true」「激光就绪」「里程计就绪」「导航栈就绪」「发车! sim_now=68」——
+**全部是对方的**。一整轮"验证通过"里没有一秒是自己的仿真。
+
+**为什么没被抓住**:打榜脚本跑在 `set -uo pipefail` 下,**没有 `-e`**。
+`roslaunch` 挂了不会中止脚本,它继续往下走 `wait_topic`,而 `wait_topic` 只要话题有数据就返回。
+
+**怎么做**:
+1. **串行跑轮。** 这是根本对策。
+2. 真要并行:`ROS_MASTER_PORT=11312`(见 `harness/arena_env.sh`),并给容器换 gazebo 端口。
+3. 任何"等待某话题出现"的逻辑,都必须先确认**自己拉起的进程还活着**。
+   `harness/run_sim.sh` 现在做三重检查: launch 文件存在 → `roslaunch` 进程仍在 →
+   `/gazebo` 节点确实在跑。任何一条不满足立刻退出。
+
+### G2. 产物路径写错, 计分会把碰撞算成 0
+
+**现象**:`PRE_RACE` 里的路径是**宿主视角**的,但那段命令在**容器内**执行。
+容器里仓库挂在 `/usr/local/share/arena_root`,而 `/home/<用户名>/...` 是容器自己的目录。
+于是监视节点把 `trace.csv` 写进了容器的文件系统,宿主上 `runs/<TAG>/trace.csv` 静默缺失。
+
+**为什么没被抓住**:`bench_score.py` 只判断"文件不存在",于是 `collisions = 0`,
+看起来就是一个"跑得很干净的成绩"。**一个不会报错、只会让碰撞罚凭空消失的 bug。**
+
+**怎么做**:凡是进容器的路径,一律用容器视角拼(`ARENA_CONTAINER_ROOT`)。
+`bench_run.sh` 尾部现在有产物自检,缺文件以非零码退出。
+
+### G3. 地图指针指向仓库外,且 map_server 不报错
+
+**现象**:大会原包的 `ucar_navigation/maps/map.yaml` 里 `image:` 写的是**绝对路径**。
+仓库 clone 到别人机器上,那个路径不存在。
+
+**为什么没被抓住**:`map_server` 读不到图**不会报错**,导航栈照样起来,
+只是地图全是未知,表现为"车乱撞 / 不动"。而在原机器上一切正常。
+
+**怎么做**:改成相对文件名 `map.pgm`(map.pgm 本身一个字节没动)。
+`harness/verify_redline.sh` 现在会核对 `resolution`/`origin`/`negate`/
+`occupied_thresh`/`free_thresh` 五项未改,并要求 `image` 是相对路径且文件存在。
+
+### G4. 镜像把 GAZEBO_MODEL_PATH 烤死了
+
+**现象**:赛事参考镜像 `smartcar-noetic-control:v2` 把 `GAZEBO_MODEL_PATH`
+烤成它自己那套 `models` 目录。脚本里写 `export GAZEBO_MODEL_PATH="${GAZEBO_MODEL_PATH:-...}"`
+**不会**覆盖它 —— 只有变量为空或未设置时才会用默认值。
+
+**后果**:指向一个不存在的目录 → 场地 mesh 与锥桶**全部没有碰撞体** →
+激光穿墙、锥桶被撞飞、地图与现实对不上。
+
+**怎么做**:`arena_env.sh` 与 entrypoint 都**强制**赋值(前提是 `$ARENA_ROOT/env/models` 存在),
+覆盖入口改用 `ARENA_GAZEBO_MODEL_PATH`。
+
+### G5. `docker exec` 不继承 entrypoint 的环境变量
+
+entrypoint 里 `export ROS_MASTER_URI=...` 只对 entrypoint 自己的进程树有效。
+`docker exec` 起的是新进程,拿不到。而打榜脚本在 `set -u` 下引用未定义的
+`ROS_MASTER_URI` 会直接 `unbound variable` 退出。
+
+**怎么做**:ROS 相关变量在 `harness/arena_env.sh` 里再兜一次底(且只在容器内设)。
+
+### G6. `spawn_cones` 的航点表必须与你的 commander 一致
+
+`harness/spawn_cones.py` 的 `ROUTE` 决定锥桶被摆在哪。改了航点不同步,
+锥桶就摆到你根本没走过的位置上,而且**不会报错**。详见 D3。
+
+---
+
 ## E. 复现用的探针(参赛者可以自己做)
 
 维护者自己的探针未随仓库分发(那是算法资产)。下面这些**用仓库现有工具就能做**:
@@ -301,3 +392,6 @@ Navfn / DWA 会直接判死。
 > (A1 行序、A2 浮点混叠、A3 插值、A4 阈值)全部源自"我以为 costmap_2d 是这么判的"。
 > 真要弄明白 planner 为什么不动,就直接订阅 `/move_base/local_costmap/costmap`,
 > 在卡死点附近把实际代价值打出来 —— 那比任何离线推导都有说服力。
+
+第二句同样适用于**打榜链路本身**:「跑通了」「指标好看」都要问一句
+**它凭什么是真的**。建仓时那次"端到端全绿",靠的是一个不存在文件和别人的 ROS master。
