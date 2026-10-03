@@ -25,3 +25,31 @@ python3 harness/bench_score.py smoke   # 打出 JSON → 环境已通
 > 仓库里**不含任何模型的算法**。`workspace/src/ucar_commander/scripts/commander.py`
 > 是维护者写的占位桩，只响应 `/nav_start` 并把机械臂归零。
 > 场地模型 `car3`、计时器 `ucar_accumtimer`、基准图、摆锥与计分工具按大会细则原样拷贝且禁改。
+
+## 仓库体积与首次 clone 的耗时
+
+工作树 40.2 MB,`git clone` 实际要拉的 pack 约 17 MB。其中:
+
+| 部分 | 体积 | 占比 |
+|---|---|---|
+| `workspace/src/car3/meshes/`(23 个二进制 STL) | 37.1 MB | **92%** |
+| 代码 / 文档 / 基准图 / 打榜工具 | 3.2 MB | 8% |
+
+**第一次 clone 会明显慢**,这是正常的,不是仓库出问题:
+
+- 体积几乎全部来自大会材料 `car3` 的小车网格。它是**红线组件**(细则注 6:赛前会做
+  小车模型代码检测),所以既不能删也不能压 —— 二进制 STL 的浮点数据熵很高,
+  最高压缩率重打包实测只从 19 MB 降到 16.6 MiB(约 13%),不值得为此改写历史。
+- 实测在**慢速链路**上(7~35 KiB/s)首次 clone 需要 35~45 分钟。之后的
+  `git pull` 只传增量,很快。
+- 想省时间:`git clone --depth 1`(省掉历史遍历;本仓库历史很浅,收益有限),
+  或直接 `git clone` 后用 `harness/` 里的脚本 —— 编译工作空间(2~5 分钟)
+  远比 clone 快,所以**更实际的建议是:先 clone,让它在后台传,同时你做别的。**
+
+验证远端内容与本地一致,不需要下载整个仓库:
+
+```bash
+git ls-remote origin main        # 远端 commit SHA
+git rev-parse HEAD               # 本地 commit SHA
+# 两者相同 => 内容按密码学意义完全一致(git 的 SHA-256 就是内容的指纹)
+```

@@ -18,6 +18,8 @@
 | 弯角锥桶过不去 | D1 |
 | **日志一切正常但成绩是假的** | **G1 G2** |
 | 激光穿墙 / 地图是空的 / clone 后跑不起来 | G3 G4 G5 |
+| 首次 clone 特别慢 | G6 |
+| 锥桶被摆到你没走过的位置 | G7 |
 
 ---
 
@@ -366,7 +368,17 @@ entrypoint 里 `export ROS_MASTER_URI=...` 只对 entrypoint 自己的进程树�
 
 **怎么做**:ROS 相关变量在 `harness/arena_env.sh` 里再兜一次底(且只在容器内设)。
 
-### G6. `spawn_cones` 的航点表必须与你的 commander 一致
+### G6. 首次 clone 慢不是 bug, 是 car3 的网格
+
+仓库 40 MB 里 92% 是 `car3/meshes/` 下 23 个二进制 STL。它是红线组件,
+既不能删也不能压(实测最高压缩率重打包只省 13%)。慢速链路上首次 clone 需
+35~45 分钟,`git pull` 很快。
+
+**不要**为此改用 Git LFS:LFS 会把这些文件变成指针文件,而本仓库的完整性保证
+(`env/REDLINE_SHA.txt` + `verify_redline.sh`)依赖对文件本身的 SHA 校验。
+用 LFS 换来的是几分钟,赔上的是"红线组件有没有被改过"这个问题的可核对性。
+
+### G7. `spawn_cones` 的航点表必须与你的 commander 一致
 
 `harness/spawn_cones.py` 的 `ROUTE` 决定锥桶被摆在哪。改了航点不同步,
 锥桶就摆到你根本没走过的位置上,而且**不会报错**。详见 D3。
