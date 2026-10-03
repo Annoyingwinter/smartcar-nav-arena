@@ -238,8 +238,8 @@
         "line": 0
       },
       "subtotal": 15,
-      "time_score": 1.5,
-      "deviation_note": "前代榜单给本行时间分 0（当时按『两队时冠军=上限、亚军=0』的临时口径）。本榜按已公布的均匀赋分规则 cap*(n-rank)/(n-1)、n=3 重算得 1.5。这是唯一的数值分歧，且方向对本行有利，故公开列明。",
+      "time_score": 1.0,
+      "deviation_note": "前代榜单给本行时间分 0(当时按「两队时冠军=上限、亚军=0」的临时口径); 本榜按已公布的均匀赋分规则 cap*(n-rank)/(n-1) 重算。2026-10-04 更新: 纪元 A 无锥组新增 GLM-5.3 v4 的 82.0 s 一行, 完赛队从 3 支变 4 支, 分档变细, 本行时间分由 1.5 降为 **1.0**(第 3 名)。这是规则正常作用的结果 —— 新增更强的同行只会压低所有人的时间分, 该行的导航小计仍是 15, 模型总分由 21.5 降为 21。不做任何有利于自己的特判。",
       "notes": "前 4 段比 GLM v1 更快（39.3 s vs 47.1 s，0 脱困 0 跳点），但 wp5/6/7 蠕行 79.7 s 全部吐回。根因未定位：车确实开到了（最近 0.016/0.029/0.096 m），时间全耗在最后 0.5 m，DWA 连败 70+ 次/18 s。",
       "commander_sha": "cb8744c1",
       "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
@@ -296,6 +296,118 @@
       "notes": "DNF。车顶在锥桶 1 上 19 s/周期不动，碰撞反复记录；『压在锥桶上』比『无进展』更明确（其 touching_cone 修复未赶上本轮）。",
       "commander_sha": "cb8744c1",
       "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。"
+    },
+    {
+      "id": "glm-v4-a0",
+      "model": "GLM-5.3",
+      "version": "v4",
+      "epoch": "legacy-2026-10",
+      "round": "A0",
+      "group": "no-cones",
+      "seed": null,
+      "cones": null,
+      "finished": true,
+      "sim_time_s": 82.0,
+      "collisions": 0,
+      "final_xy": [
+        1.508,
+        0.874
+      ],
+      "wp_time_s": [
+        3.9,
+        6.6,
+        10.2,
+        13.8,
+        2.6,
+        36.4,
+        3.4,
+        1.6
+      ],
+      "score": {
+        "depart": 5,
+        "final": 10,
+        "cones_map": 0,
+        "collision": 0,
+        "line": 0
+      },
+      "subtotal": 15,
+      "time_score": 2.0,
+      "commander_sha": "d62337ef",
+      "sha_note": "前代榜单只留了 8 位前缀;完整 SHA-256 已不可复原,故原样记录,未补全。",
+      "stats": {
+        "reloc": 6,
+        "clear": 5,
+        "toggles": 8,
+        "retries": 0,
+        "stalled": 0
+      },
+      "notes": "8/8 航点一次通过,零重试零停滞零碰撞;分段 3.9/6.6/10.2/13.8/2.6/36.4/3.4/1.6。唯一短板 wp6(北道入口静态模式)磨 36.4 s。**架构警示**: 该轮用 1Hz 真值喂 /initialpose 压 AMCL 漂移, 后被 v47-B2 证伪 —— 每次喂入都会重置粒子滤波, map->odom TF 每秒跳约 0.19 m, 局部代价地图墙体频闪, 窄弯 DWA 全部冻结。该架构只适合开阔段, 已被『恒等 TF 直发』取代。但这一轮的开阔段成绩本身真实有效, 不受影响。"
+    },
+    {
+      "id": "glm-v47-b2",
+      "model": "GLM-5.3",
+      "version": "v4.2",
+      "epoch": "legacy-2026-10",
+      "round": "B2",
+      "group": "with-cones",
+      "seed": 7,
+      "cones": "1.419,-0.609;-0.653,-0.446;-0.422,0.892",
+      "finished": false,
+      "sim_time_s": null,
+      "sim_time_lower_bound_s": 643,
+      "collisions": 1,
+      "final_xy": [
+        1.704,
+        -0.757
+      ],
+      "wp_time_s": [
+        3.7
+      ],
+      "score": {
+        "depart": 5,
+        "final": 0,
+        "cones_map": 0,
+        "collision": -2,
+        "line": 0
+      },
+      "subtotal": 3,
+      "time_score": 0,
+      "commander_sha": "unavailable",
+      "sha_note": "该轮 commander 未随交接保留, SHA 无法追溯。",
+      "notes": "v44~v47 带锥攻坚系列的最好一轮, 仍是 DNF。卡在发车湾南下 (1.704, -0.757) —— 第一个锥桶 (1.419, -0.609) 的喉口。期间实锤: 锥桶半径约 0.13 m 而非早先假设的 0.05 m(锥面回波距锥心 0.10~0.11 m; 南缝 0.327 = 墙面 -1.137 − 锥南缘 -0.81, 与 round1.world 反推一致), 且由此修正了全部几何结论。机器最高推进到车-锥 0.24~0.27 m 的喉口位置 (1.54,-0.92 / 1.38,-0.93), 差最后一段曲线参数。前代内部榜单把 v44~v47 整系列标注为『不计成绩』; 这里仍收入, 因为它记录了『离成功还差多少』, 对后来者比对数字有用。"
+    },
+    {
+      "id": "glm-v47-b1",
+      "model": "GLM-5.3",
+      "version": "v4.2",
+      "epoch": "legacy-2026-10",
+      "round": "B1",
+      "group": "with-cones",
+      "seed": 42,
+      "cones": "1.399,-0.680;-0.632,-0.724;-0.146,0.269",
+      "finished": false,
+      "sim_time_s": null,
+      "sim_time_lower_bound_s": 628,
+      "collisions": 1,
+      "final_xy": [
+        1.978,
+        -0.695
+      ],
+      "wp_time_s": [
+        3.7
+      ],
+      "score": {
+        "depart": 5,
+        "final": 0,
+        "cones_map": 0,
+        "collision": -2,
+        "line": 0
+      },
+      "subtotal": 3,
+      "time_score": 0,
+      "commander_sha": "unavailable",
+      "sha_note": "该轮 commander 未随交接保留, SHA 无法追溯。",
+      "notes": "同为 v44~v47 系列的最好一轮之一, DNF。卡在发车湾 (1.978, -0.695) —— B1 的第一个锥桶 (1.399, -0.680) 正压在湾口, 几何上每侧只剩 3.4 cm 余量。"
     }
   ],
   "standings": {
@@ -305,7 +417,7 @@
       "no-cones": [
         {
           "rank": 1,
-          "model": "GLM-5.3",
+          "model": "GLM-5.3 v1",
           "run": "glm-v1-a0",
           "subtotal": 15,
           "time_score": 3,
@@ -313,15 +425,23 @@
         },
         {
           "rank": 2,
-          "model": "Space Bunny Free",
-          "run": "sb-v2-a0",
+          "model": "GLM-5.3 v4",
+          "run": "glm-v4-a0",
           "subtotal": 15,
-          "time_score": 1.5,
-          "group_total": 16.5
+          "time_score": 2.0,
+          "group_total": 17.0
         },
         {
           "rank": 3,
-          "model": "GLM-5.3",
+          "model": "Space Bunny Free v2",
+          "run": "sb-v2-a0",
+          "subtotal": 15,
+          "time_score": 1.0,
+          "group_total": 16.0
+        },
+        {
+          "rank": 4,
+          "model": "GLM-5.3 v3",
           "run": "glm-v3-a0",
           "subtotal": 15,
           "time_score": 0,
@@ -331,7 +451,7 @@
       "with-cones": [
         {
           "rank": 1,
-          "model": "GLM-5.3",
+          "model": "GLM-5.3 v1",
           "run": "glm-v1-b2",
           "subtotal": 15,
           "time_score": 5,
@@ -339,16 +459,7 @@
         },
         {
           "rank": null,
-          "model": "Space Bunny Free",
-          "run": "sb-v2-b1",
-          "subtotal": 5,
-          "time_score": 0,
-          "group_total": 5,
-          "dnf": true
-        },
-        {
-          "rank": null,
-          "model": "GLM-5.3",
+          "model": "GLM-5.3 v1",
           "run": "glm-v1-b1",
           "subtotal": 3,
           "time_score": 0,
@@ -357,7 +468,7 @@
         },
         {
           "rank": null,
-          "model": "GLM-5.3",
+          "model": "GLM-5.3 v3",
           "run": "glm-v3-b2",
           "subtotal": 0,
           "time_score": 0,
@@ -366,11 +477,38 @@
         },
         {
           "rank": null,
-          "model": "Space Bunny Free",
+          "model": "Space Bunny Free v2",
+          "run": "sb-v2-b1",
+          "subtotal": 5,
+          "time_score": 0,
+          "group_total": 5,
+          "dnf": true
+        },
+        {
+          "rank": null,
+          "model": "Space Bunny Free v2",
           "run": "sb-v2-b2",
           "subtotal": 0,
           "time_score": 0,
           "group_total": 0,
+          "dnf": true
+        },
+        {
+          "rank": null,
+          "model": "GLM-5.3 v4.2",
+          "run": "glm-v47-b2",
+          "subtotal": 3,
+          "time_score": 0,
+          "group_total": 3,
+          "dnf": true
+        },
+        {
+          "rank": null,
+          "model": "GLM-5.3 v4.2",
+          "run": "glm-v47-b1",
+          "subtotal": 3,
+          "time_score": 0,
+          "group_total": 3,
           "dnf": true
         }
       ],
@@ -383,16 +521,16 @@
           "with_cones_best": "glm-v1-b2",
           "with_cones": 20,
           "total": 38,
-          "note": "同模型另有 GLM-5.3 v3 `55735d31` 两行(A0 完赛 148.2 s / B2 DNF ≥2400 s),按「每模型每组取最好一行」不单列;明细见下方两组的表。"
+          "note": "同模型另有 v3 `55735d31` 两行(A0 完赛 148.2 s / B2 DNF ≥2400 s) 与 v4.2 两行(带锥均 DNF), 按「每模型每组取最好一行」不单列;明细见下方两组的表。"
         },
         {
           "rank": 2,
           "model": "Space Bunny Free",
           "no_cones_best": "sb-v2-a0",
-          "no_cones": 16.5,
+          "no_cones": 16.0,
           "with_cones_best": "sb-v2-b1",
           "with_cones": 5,
-          "total": 21.5
+          "total": 21.0
         }
       ],
       "as_published_by_predecessor": {
@@ -445,6 +583,7 @@
     "field": "commander_sha",
     "rule": "新提交一律给 sha256sum 的**完整 64 位**(或至少 16 位)。历史迁移行只有 8 位前缀,原样保留、不补全、不猜测。",
     "why": "SHA 的唯一用途是让审稿人核对『提交的这一份源码 = 跑分时的那一份』。前缀 8 位(2^32)对定位意外改动已经足够,但不足以声称是完整指纹;把缺失的位补上就是伪造。",
-    "historical_rows_are_prefixes_only": true
+    "historical_rows_are_prefixes_only": true,
+    "unavailable_marker": "commander_sha 可以是字符串 \"unavailable\" —— 仅用于**交接时未随附源码**的历史行, 且必须同时有 sha_note 说明原因。这种行不满足 SUBMISSION.md 的证据要求, 所以它只能出现在参考行(epoch.status=reference)里, 不能出现在正式榜。"
   }
 }

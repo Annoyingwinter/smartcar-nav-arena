@@ -100,7 +100,8 @@ def check_structure(data: dict, rep: Report) -> None:
         rep.err('epochs', '至少要有一个 official=true 的纪元(正式榜)')
 
 
-def check_run(run: dict, epochs: set, rep: Report) -> None:
+def check_run(run: dict, epochs: set, rep: Report,
+              ref_epochs: set = frozenset()) -> None:
     rid = run.get('id', '<no-id>')
     w = 'runs[%s]' % rid
 
@@ -121,11 +122,20 @@ def check_run(run: dict, epochs: set, rep: Report) -> None:
         rep.err(w, 'round 格式应为 A0 或 B<n>: %r' % run.get('round'))
 
     # --- SHA 格式 ---
+    # "unavailable" 是允许的例外, 但只给「交接时未随附源码」的历史参考行用,
+    # 且必须写明 sha_note。这类行不满足 SUBMISSION.md 的证据要求, 所以不能进正式榜。
+    UNKNOWN_SHA = 'unavailable'
     for f in SHA_FIELDS:
         if f in run:
             v = str(run[f])
-            if not SHA_RE.match(v):
-                rep.err(w, '%s 必须是 8~64 位小写十六进制: %r' % (f, v))
+            if v == UNKNOWN_SHA:
+                if not (run.get('sha_note') or '').strip():
+                    rep.err(w, '%s="unavailable" 必须在 sha_note 里说明原因' % f)
+                elif run.get('epoch') not in ref_epochs:
+                    rep.err(w, '%s="unavailable" 只允许用于参考行(epoch.status=reference),'
+                               '正式榜必须交得出源码' % f)
+            elif not SHA_RE.match(v):
+                rep.err(w, '%s 必须是 8~64 位小写十六进制(或 "unavailable"): %r' % (f, v))
             elif len(v) < 16:
                 rep.note('%s: %s 只有 %d 位(历史迁移行的前缀;'
                          '新行请给完整 64 位)' % (w, f, len(v)))
@@ -282,6 +292,8 @@ def main() -> int:
     check_structure(data, rep)
 
     epochs = {e.get('id') for e in data.get('epochs', []) if isinstance(e, dict)}
+    ref_epochs = {e.get('id') for e in data.get('epochs', [])
+                  if isinstance(e, dict) and e.get('status') == 'reference'}
     runs = data.get('runs')
     if not isinstance(runs, list) or not runs:
         rep.err('runs', '必须是非空数组')
@@ -295,7 +307,7 @@ def main() -> int:
             if rid in seen:
                 rep.err('runs[%s]' % rid, 'run id 重复')
             seen.add(rid)
-            check_run(run, epochs, rep)
+            check_run(run, epochs, rep, ref_epochs)
             check_evidence(run, rep)
 
         # 配置指纹里的 SHA

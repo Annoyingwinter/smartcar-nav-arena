@@ -118,7 +118,7 @@
           "time_score": { "type": "number", "minimum": 0, "maximum": 5 },
           "commander_sha": {
             "type": "string",
-            "pattern": "^[0-9a-f]{8,64}$",
+            "pattern": "^(unavailable|[0-9a-f]{8,64})$",
             "description": "SHA-256 的十六进制串。历史迁移行只有 8 位前缀(见 sha_policy);新提交给完整 64 位。"
           },
           "reproduced_from": { "type": "string" },
