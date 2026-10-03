@@ -90,8 +90,11 @@ done
 if [[ -s "$BENCH/trace.csv" ]]; then
     printf '  ✓ %s (%s 行)\n' "$BENCH/trace.csv" "$(wc -l < "$BENCH/trace.csv")"
 elif [[ -s "$ARENA_BENCH/sim_run_${TAG}.log" ]] && grep -q '发车!' "$ARENA_BENCH/sim_run_${TAG}.log"; then
-    printf '  ✗ trace.csv 没生成 —— 监视节点没起来。这一轮的成绩不可信, 请看 sim_nodes 日志\n' \
-        "      ($ARENA_BENCH/sim_nodes_${TAG}.log)"; missing=1
+    printf '  ✗ trace.csv 没生成 —— 这一轮的成绩不可信(碰撞数会被当成 0)。\n'
+    printf '      两个常见原因:(1) 监视节点没起来, 看 %s\n' \
+        "$ARENA_BENCH/sim_nodes_${TAG}.log"
+    printf '      (2) 这一轮被硬杀而没正常收尾 —— bench_monitor.py 只在退出时才落盘\n'
+    printf '      见 docs/KNOWN_ISSUES.md G7。重跑这一轮, 不要拿它上榜。'; missing=1
 fi
 
 echo

@@ -152,8 +152,42 @@ xhost +si:localuser:flexing     # 宿主机执行一次
 (`baseline_commander_stub`):它只响应 `/nav_start` 发车、把机械臂归零,然后挂起。
 **它不含任何导航算法,也不含任何其他模型的算法。**
 
-所以 `bench_run.sh smoke` 跑完会看到 `finished=false` —— 这恰好证明你的环境是通的:
-仿真起来了、机械臂动了、commander 注册了服务、日志和 trace 都落盘了、计分脚本能出 JSON。
+所以 `bench_run.sh smoke` 跑完会看到 `finished=false`。这恰好证明你的环境是通的。
+
+### 维护者实测的一轮(2026-10-03,参考值)
+
+`bash harness/bench_run.sh real-A0 600` 的完整产物:
+
+```
+耗时: 墙钟 604.2s / 仿真 158.0s
+发车! sim_now=70   success: True   message: "baseline stub: no navigation"
+最终 amcl 位置: 1.66 0.33
+runs/real-A0/trace.csv     803 行(5Hz × 160 仿真秒)
+```
+
+`python3 harness/bench_score.py real-A0` 的输出(**逐项核对过,全部符合"不导航"的预期**):
+
+```json
+{"tag":"real-A0","finished":false,"sim_time":null,"wall_time":604.2,
+ "depart":null,"reach_final":null,"collisions":0,"pocket_stop":false,
+ "wp_time":[],"stats":{},"notes":["未完赛(commander 中止或超时)"],
+ "final_xy":[1.72,0.27],
+ "score":{"depart":0,"final":0,"cones_map":0,"collision":0,"line":0},
+ "subtotal":0}
+```
+
+**注意 `subtotal` 是 0 而不是 5。** 很多人以为"发了车就有 5 分"—— 不是:
+发车 5 分的条件是**车心离开起点区域** `x∈[1.30,2.10] y∈[0.05,0.65]`。
+占位桩原地不动,`trace.csv` 里 802 个采样点实测**全部落在起点区内**
+(`dx=0.000 dy=0.000 m`),所以 `depart` 是 `null`,所有项都是 0。
+**这一轮的 0 分是正确答案**,不是故障。
+
+顺带说明另外两件容易误读的事:
+
+- `sim_time` 是 `null` 而不是 158.0 —— `bench_score.py` 对未完赛不报仿真用时,
+  但真实用时在日志里(`耗时: 墙钟 604.2s / 仿真 158.0s`)。
+- 这一轮跑满了 600 秒超时才结束,因为占位桩永远不会打印「完赛!」。
+  真算法完赛后会立即结束,不需要等满。
 
 确认环境通之后,下一步就是**把你自己的 commander 写进那个文件**,再按
 [BENCHMARK.md](BENCHMARK.md) 跑分。

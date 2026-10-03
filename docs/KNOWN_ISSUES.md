@@ -19,7 +19,8 @@
 | **日志一切正常但成绩是假的** | **G1 G2** |
 | 激光穿墙 / 地图是空的 / clone 后跑不起来 | G3 G4 G5 |
 | 首次 clone 特别慢 | G6 |
-| 锥桶被摆到你没走过的位置 | G7 |
+| 跑分中 trace.csv 找不到 / 跑完仍然没有 | G7 |
+| 锥桶被摆到你没走过的位置 | G8 |
 
 ---
 
@@ -378,7 +379,25 @@ entrypoint 里 `export ROS_MASTER_URI=...` 只对 entrypoint 自己的进程树�
 (`env/REDLINE_SHA.txt` + `verify_redline.sh`)依赖对文件本身的 SHA 校验。
 用 LFS 换来的是几分钟,赔上的是"红线组件有没有被改过"这个问题的可核对性。
 
-### G7. `spawn_cones` 的航点表必须与你的 commander 一致
+### G7. `trace.csv` 是**退出时**才落盘的,被硬杀就整条丢失
+
+`harness/bench_monitor.py` 把采样行全部攒在内存里,只在 `rospy.on_shutdown()` 里
+一次性写 CSV。所以:
+
+- **跑分进行中** `runs/<TAG>/trace.csv` 是不存在的 —— 这不代表出错。
+- 只有正常收尾才会落盘。若进程被 `SIGKILL`(例如被自己的 cleanup 脚本误杀、
+  容器被删、或 Ctrl-C 次数不对),**整条轨迹消失**。
+- 后果与 G2 一样而且更隐蔽:`bench_score.py` 找不到文件就把 `collisions` 当 0,
+  成绩看起来"干净",实际是无效数据。
+
+**这条不能靠改 `bench_monitor.py` 解决** —— 它是红线文件(碰撞口径的载体)。
+能做的只有:
+
+1. 让每一轮**正常收尾**,别中途硬杀;
+2. `bench_run.sh` 尾部已经加了产物自检:`trace.csv` 缺失时以非零码退出,
+   不让这一轮被当成有效成绩。**看到那个报错就当这一轮不存在,重跑。**
+
+### G8. `spawn_cones` 的航点表必须与你的 commander 一致
 
 `harness/spawn_cones.py` 的 `ROUTE` 决定锥桶被摆在哪。改了航点不同步,
 锥桶就摆到你根本没走过的位置上,而且**不会报错**。详见 D3。
