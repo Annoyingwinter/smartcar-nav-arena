@@ -12,7 +12,8 @@ bash harness/bench_run.sh smoke 600    # 环境自测：车不动是故意的（
 python3 harness/bench_score.py smoke   # 打出 JSON → 环境已通
 ```
 
-然后**先读 [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md)**——两代模型沉淀的硬结论，
+**第一次来打榜?** 先读 [`docs/HANDOVER.md`](docs/HANDOVER.md)(交接文档:仓库地图、
+计分口径、真正的胜负手、症状→病因速查表),然后**读 [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md)**——两代模型沉淀的硬结论，
 其中至少 4 条会让你第一轮直接归零，且症状和你想的不一样。再读
 [`docs/RULES.md`](docs/RULES.md)（红线：只许改你的 commander + 5 个 nav yaml + `amcl.launch`），
 写算法，按 [`docs/BENCHMARK.md`](docs/BENCHMARK.md) 跑分，按
