@@ -195,6 +195,28 @@ def main():
     tolerant_cov = 100.0 * tolerant_tp / max(1, truth_tolerant.sum())
     ghost = 100.0 * fp / max(1, occ.sum())
 
+    # --- 幽灵墙数字的正确读法(维护者 2026-10-04 补) ---
+    # 下面这个"幽灵墙"用的是 0.3 格(0.015 m)严判。它**不是**"图里有这么多假墙":
+    # 实测这张基准图的 342 个占据格到最近真墙表面的距离中位 0.008 m、p90 0.033 m、
+    # **最大 0.034 m(0.69 格)** —— 也就是说没有一个占据格是站在空地上的。
+    # 之所以还有"幽灵",是因为 3 cm 厚的墙落在 5 cm 栅格上必然被画胖一两格,
+    # 那 130 格离真墙只有 1.5~3.4 cm。容差放到 0.8 格就归零。
+    # 单独把距离分布打出来, 免得这个百分比被当成"图很脏"。
+    _d = []
+    _xs = origin[0] + np.arange(w) * res
+    _ys = origin[1] + (h - 1 - np.arange(h)) * res
+    _X, _Y = np.meshgrid(_xs, _ys)
+    _best = np.full((h, w), 1e9)
+    for (_n, _x, _y, _L, _T, _a) in segs:
+        _ca, _sa = math.cos(_a), math.sin(_a)
+        _dx, _dy = _X - _x, _Y - _y
+        _u = _dx * _ca + _dy * _sa
+        _v = -_dx * _sa + _dy * _ca
+        _du = np.maximum(np.abs(_u) - _L / 2, 0.0)
+        _dv = np.maximum(np.abs(_v) - _T / 2, 0.0)
+        _best = np.minimum(_best, np.hypot(_du, _dv))
+    _d = _best[occ]
+
     print("--- 1. 覆盖度 (决定能不能规划) ---")
     print("  unknown 比例      %5.1f%%   %s" % (pct_unk,
           "OK" if pct_unk < 15 else ("WARN" if pct_unk < 40 else "FAIL —— 有大片没建到")))
@@ -207,6 +229,18 @@ def main():
           "OK" if ghost < 20 else ("WARN" if ghost < 50 else "FAIL —— 图里有大量假墙")))
     print("  (真实墙 %d 格 / 地图标占据 %d 格 / 其中幽灵 %d 格)"
           % (truth_strict.sum(), occ.sum(), fp))
+    print()
+    print("  >> 上面这个『幽灵 %%』是 %.3f m(%.1f 格)严判的结果, 别当成『图里有假墙』:" % (0.015, 0.3))
+    print("     地图 %d 个占据格到最近真墙**表面**的距离:" % int(occ.sum()))
+    print("        中位 %.3f m   p90 %.3f m   **最大 %.3f m (%.2f 格)**"
+          % (np.percentile(_d, 50), np.percentile(_d, 90),
+             _d.max(), _d.max() / res))
+    for _tol in (0.025, 0.040, 0.050):
+        _n = int((_d > _tol).sum())
+        print("        容差 %.3f m (%.1f 格) -> 幽灵 %3d 格 (%.1f%%)"
+              % (_tol, _tol / res, _n, 100.0 * _n / max(1, len(_d))))
+    print("     3 cm 厚的墙落在 5 cm 栅格上必然被画胖一两格, 那不是假墙。")
+    print("     判断『有没有假墙』看**最大距离**: 超过约 1 格才说明有占据格站在空地上。")
     print()
     # 逐墙
     print("  逐墙还原:")
