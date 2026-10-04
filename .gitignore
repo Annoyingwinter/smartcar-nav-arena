@@ -21,3 +21,5 @@ evidence/*/**/nav_calib.py
 *.pgm.orig
 .DS_Store
 Thumbs.db
+# 诊断工具生成的图(不入库; 跑 python3 tools/render_map_gaps.py 现生成)
+tools/map_gaps.png
